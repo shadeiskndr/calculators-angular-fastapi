@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  calculators-api:
+    build: ./fast-api-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./fast-api-backend:/app
+    environment:
+      - PYTHONPATH=/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+
+  calculators-ui:
+    build: ./angular-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - calculators-api

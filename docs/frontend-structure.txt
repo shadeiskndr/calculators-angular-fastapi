@@ -1,0 +1,48 @@
+angular-frontend
+├── .gitignore
+├── .postcssrc.json
+├── angular.json
+├── Dockerfile
+├── nginx.conf
+├── package-lock.json
+├── package.json
+├── proxy.conf.json
+├── public
+│   └── favicon.ico
+├── README.md
+├── src
+│   ├── app
+│   │   ├── app.component.html
+│   │   ├── app.component.scss
+│   │   ├── app.component.spec.ts
+│   │   ├── app.component.ts
+│   │   ├── app.config.ts
+│   │   ├── app.routes.ts
+│   │   ├── components
+│   │   │   ├── app.config.ts
+│   │   │   ├── app.footer.ts
+│   │   │   ├── app.topbar.ts
+│   │   │   ├── dashboard
+│   │   │   │   ├── productoverviewwidget.ts
+│   │   │   │   ├── recentactivitywidget.ts
+│   │   │   │   ├── salestrendwidget.ts
+│   │   │   │   └── statswidget.ts
+│   │   │   └── var
+│   │   │       ├── batch-var-calculator.component.html
+│   │   │       ├── batch-var-calculator.component.ts
+│   │   │       ├── single-var-calculator.component.html
+│   │   │       └── single-var-calculator.component.ts
+│   │   ├── models
+│   │   │   └── var.model.ts
+│   │   └── services
+│   │       ├── health.service.ts
+│   │       ├── layout.service.ts
+│   │       └── var-api.service.ts
+│   ├── assets
+│   │   └── logo.png
+│   ├── index.html
+│   ├── main.ts
+│   └── styles.scss
+├── tsconfig.app.json
+├── tsconfig.json
+└── tsconfig.spec.json

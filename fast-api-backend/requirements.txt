@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+numpy
+scipy
+black
+pytest
+httpx
+pytest-cov
