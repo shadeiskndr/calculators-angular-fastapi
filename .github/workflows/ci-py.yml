@@ -37,7 +37,8 @@ jobs:
           pip install pytest httpx  # Add test dependencies
 
       - name: Check code formatting with Black
-        run: black --check --diff .
+        run: |
+          black --check --diff . || (echo "Code formatting issues found. Run 'black .' to fix." && exit 1)
 
       - name: Run linting with flake8
         run: |
