@@ -27,7 +27,7 @@ angular-frontend
 │   │   │   │   ├── recentactivitywidget.ts
 │   │   │   │   ├── salestrendwidget.ts
 │   │   │   │   └── statswidget.ts
-│   │   │   └── var
+│   │   │   └── var-calculator
 │   │   │       ├── batch-var-calculator.component.html
 │   │   │       ├── batch-var-calculator.component.ts
 │   │   │       ├── single-var-calculator.component.html

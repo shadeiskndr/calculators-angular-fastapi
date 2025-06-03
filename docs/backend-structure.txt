@@ -2,4 +2,5 @@ fast-api-backend
 ├── Dockerfile
 ├── main.py
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── test_main.py
