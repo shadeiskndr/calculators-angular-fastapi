@@ -76,147 +76,162 @@
   <!-- Results Section -->
   <div *ngIf="result" class="mt-2">
     <p-divider />
-    <p-tabView>
-      <!-- Main Results Tab -->
-      <p-tabPanel header="VaR Results" leftIcon="pi pi-chart-bar">
-        <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-surface-600 dark:text-surface-300"
-                >VaR Value:</span
-              >
-              <span class="text-lg font-semibold text-primary">
-                {{ result.var | number : "1.4-4" }}
-              </span>
+    <p-tabs [value]="activeResultTab" scrollable>
+      <p-tablist>
+        <p-tab [value]="0">
+          <i class="pi pi-chart-bar mr-2"></i>
+          VaR Results
+        </p-tab>
+        <p-tab [value]="1" *ngIf="result.additional_stats">
+          <i class="pi pi-chart-line mr-2"></i>
+          Statistics
+        </p-tab>
+        <p-tab [value]="2">
+          <i class="pi pi-list mr-2"></i>
+          Data Preview
+        </p-tab>
+      </p-tablist>
+
+      <p-tabpanels>
+        <!-- Main Results Tab -->
+        <p-tabpanel [value]="0">
+          <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-surface-600 dark:text-surface-300"
+                  >VaR Value:</span
+                >
+                <span class="text-lg font-semibold text-primary">
+                  {{ result.var | number : "1.4-4" }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-surface-600 dark:text-surface-300"
+                  >Confidence:</span
+                >
+                <span class="text-sm font-medium">{{
+                  result.confidence_level
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-surface-600 dark:text-surface-300"
+                  >Method:</span
+                >
+                <span class="text-sm font-medium capitalize">{{
+                  result.method
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-surface-600 dark:text-surface-300"
+                  >Sample Size:</span
+                >
+                <span class="text-sm font-medium"
+                  >{{ result.sample_size }} values</span
+                >
+              </div>
             </div>
-            <div class="flex justify-between items-center">
+          </div>
+        </p-tabpanel>
+
+        <!-- Statistics Tab -->
+        <p-tabpanel [value]="1" *ngIf="result.additional_stats">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.mean !== undefined"
+            >
               <span class="text-sm text-surface-600 dark:text-surface-300"
-                >Confidence:</span
+                >Mean:</span
               >
               <span class="text-sm font-medium">{{
-                result.confidence_level
+                result.additional_stats.mean | number : "1.4-4"
               }}</span>
             </div>
-            <div class="flex justify-between items-center">
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.std !== undefined"
+            >
               <span class="text-sm text-surface-600 dark:text-surface-300"
-                >Method:</span
+                >Std Dev:</span
               >
-              <span class="text-sm font-medium capitalize">{{
-                result.method
+              <span class="text-sm font-medium">{{
+                result.additional_stats.std | number : "1.4-4"
               }}</span>
             </div>
-            <div class="flex justify-between items-center">
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.skewness !== undefined"
+            >
               <span class="text-sm text-surface-600 dark:text-surface-300"
-                >Sample Size:</span
+                >Skewness:</span
               >
-              <span class="text-sm font-medium"
-                >{{ result.sample_size }} values</span
+              <span class="text-sm font-medium">{{
+                result.additional_stats.skewness | number : "1.4-4"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.kurtosis !== undefined"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Kurtosis:</span
+              >
+              <span class="text-sm font-medium">{{
+                result.additional_stats.kurtosis | number : "1.4-4"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.min !== undefined"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Min:</span
+              >
+              <span class="text-sm font-medium">{{
+                result.additional_stats.min | number : "1.4-4"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.max !== undefined"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Max:</span
+              >
+              <span class="text-sm font-medium">{{
+                result.additional_stats.max | number : "1.4-4"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center"
+              *ngIf="result.additional_stats.z_score !== undefined"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Z-Score:</span
+              >
+              <span class="text-sm font-medium">{{
+                result.additional_stats.z_score | number : "1.4-4"
+              }}</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Data Preview Tab -->
+        <p-tabpanel [value]="2">
+          <div class="text-xs text-surface-500 dark:text-surface-400">
+            <p class="mb-2"><strong>Input Data (first 20 values):</strong></p>
+            <div
+              class="bg-surface-100 dark:bg-surface-800 p-3 rounded font-mono"
+            >
+              {{ parsedNumbers.slice(0, 20).join(", ") }}
+              <span *ngIf="parsedNumbers.length > 20"
+                >... and {{ parsedNumbers.length - 20 }} more</span
               >
             </div>
           </div>
-        </div>
-      </p-tabPanel>
-
-      <!-- Statistics Tab -->
-      <p-tabPanel
-        header="Statistics"
-        leftIcon="pi pi-chart-line"
-        *ngIf="result.additional_stats"
-      >
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.mean !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Mean:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.mean | number : "1.4-4"
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.std !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Std Dev:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.std | number : "1.4-4"
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.skewness !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Skewness:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.skewness | number : "1.4-4"
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.kurtosis !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Kurtosis:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.kurtosis | number : "1.4-4"
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.min !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Min:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.min | number : "1.4-4"
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.max !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Max:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.max | number : "1.4-4"
-            }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center"
-            *ngIf="result.additional_stats.z_score !== undefined"
-          >
-            <span class="text-sm text-surface-600 dark:text-surface-300"
-              >Z-Score:</span
-            >
-            <span class="text-sm font-medium">{{
-              result.additional_stats.z_score | number : "1.4-4"
-            }}</span>
-          </div>
-        </div>
-      </p-tabPanel>
-
-      <!-- Data Preview Tab -->
-      <p-tabPanel header="Data Preview" leftIcon="pi pi-list">
-        <div class="text-xs text-surface-500 dark:text-surface-400">
-          <p class="mb-2"><strong>Input Data (first 20 values):</strong></p>
-          <div class="bg-surface-100 dark:bg-surface-800 p-3 rounded font-mono">
-            {{ parsedNumbers.slice(0, 20).join(", ") }}
-            <span *ngIf="parsedNumbers.length > 20"
-              >... and {{ parsedNumbers.length - 20 }} more</span
-            >
-          </div>
-        </div>
-      </p-tabPanel>
-    </p-tabView>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
   </div>
 
   <!-- Error Display -->

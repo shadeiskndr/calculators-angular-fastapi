@@ -20,69 +20,86 @@
         </p>
       </div>
 
-      <p-tabView>
-        <p-tabPanel header="Single VaR Calculator" leftIcon="pi pi-calculator">
-          <div class="flex justify-center">
-            <div class="w-full max-w-2xl">
-              <single-var-calculator />
-            </div>
-          </div>
-        </p-tabPanel>
+      <p-tabs [value]="activeTab" scrollable>
+        <p-tablist>
+          <p-tab [value]="0">
+            <i class="pi pi-calculator mr-2"></i>
+            Single VaR Calculator
+          </p-tab>
+          <p-tab [value]="1">
+            <i class="pi pi-table mr-2"></i>
+            Batch VaR Calculator
+          </p-tab>
+          <p-tab [value]="2">
+            <i class="pi pi-book mr-2"></i>
+            API Documentation
+          </p-tab>
+        </p-tablist>
 
-        <p-tabPanel header="Batch VaR Calculator" leftIcon="pi pi-table">
-          <batch-var-calculator />
-        </p-tabPanel>
+        <p-tabpanels>
+          <p-tabpanel [value]="0">
+            <div class="flex justify-center">
+              <div class="w-full max-w-2xl">
+                <single-var-calculator />
+              </div>
+            </div>
+          </p-tabpanel>
 
-        <p-tabPanel header="API Documentation" leftIcon="pi pi-book">
-          <div
-            class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
-          >
-            <h3 class="text-xl font-semibold mb-4">API Endpoints</h3>
-            <div class="space-y-4">
-              <div class="border-l-4 border-primary pl-4">
-                <h4 class="font-medium">POST /api/simpleVaR</h4>
-                <p class="text-sm text-surface-600 dark:text-surface-400">
-                  Calculate VaR for a single dataset with configurable
-                  confidence level and method
-                </p>
+          <p-tabpanel [value]="1">
+            <batch-var-calculator />
+          </p-tabpanel>
+
+          <p-tabpanel [value]="2">
+            <div
+              class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+            >
+              <h3 class="text-xl font-semibold mb-4">API Endpoints</h3>
+              <div class="space-y-4">
+                <div class="border-l-4 border-primary pl-4">
+                  <h4 class="font-medium">POST /api/simpleVaR</h4>
+                  <p class="text-sm text-surface-600 dark:text-surface-400">
+                    Calculate VaR for a single dataset with configurable
+                    confidence level and method
+                  </p>
+                </div>
+                <div class="border-l-4 border-primary pl-4">
+                  <h4 class="font-medium">POST /api/batchVaR</h4>
+                  <p class="text-sm text-surface-600 dark:text-surface-400">
+                    Calculate VaR for multiple datasets (up to 10) in a single
+                    request
+                  </p>
+                </div>
+                <div class="border-l-4 border-primary pl-4">
+                  <h4 class="font-medium">GET /api/healthz</h4>
+                  <p class="text-sm text-surface-600 dark:text-surface-400">
+                    Health check endpoint for monitoring API status
+                  </p>
+                </div>
               </div>
-              <div class="border-l-4 border-primary pl-4">
-                <h4 class="font-medium">POST /api/batchVaR</h4>
-                <p class="text-sm text-surface-600 dark:text-surface-400">
-                  Calculate VaR for multiple datasets (up to 10) in a single
-                  request
-                </p>
-              </div>
-              <div class="border-l-4 border-primary pl-4">
-                <h4 class="font-medium">GET /api/healthz</h4>
-                <p class="text-sm text-surface-600 dark:text-surface-400">
-                  Health check endpoint for monitoring API status
+              <div class="mt-6 p-4 bg-surface-100 dark:bg-surface-800 rounded">
+                <p class="text-sm">
+                  <strong>Full API Documentation:</strong>
+                  <a
+                    href="/api/docs"
+                    target="_blank"
+                    class="text-primary hover:underline"
+                  >
+                    Interactive Swagger UI
+                  </a>
+                  |
+                  <a
+                    href="/api/redoc"
+                    target="_blank"
+                    class="text-primary hover:underline"
+                  >
+                    ReDoc Documentation
+                  </a>
                 </p>
               </div>
             </div>
-            <div class="mt-6 p-4 bg-surface-100 dark:bg-surface-800 rounded">
-              <p class="text-sm">
-                <strong>Full API Documentation:</strong>
-                <a
-                  href="/api/docs"
-                  target="_blank"
-                  class="text-primary hover:underline"
-                >
-                  Interactive Swagger UI
-                </a>
-                |
-                <a
-                  href="/api/redoc"
-                  target="_blank"
-                  class="text-primary hover:underline"
-                >
-                  ReDoc Documentation
-                </a>
-              </p>
-            </div>
-          </div>
-        </p-tabPanel>
-      </p-tabView>
+          </p-tabpanel>
+        </p-tabpanels>
+      </p-tabs>
     </div>
   </div>
 

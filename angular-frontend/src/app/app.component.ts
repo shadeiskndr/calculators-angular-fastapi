@@ -3,7 +3,7 @@ import { AppTopbar } from "./components/app.topbar";
 import { SingleVarCalculatorComponent } from "./components/var-calculator/single-var-calculator.component";
 import { BatchVarCalculatorComponent } from "./components/var-calculator/batch-var-calculator.component";
 import { AppFooter } from "./components/app.footer";
-import { TabViewModule } from "primeng/tabview";
+import { TabsModule } from "primeng/tabs";
 
 @Component({
   selector: "app-root",
@@ -12,9 +12,11 @@ import { TabViewModule } from "primeng/tabview";
     SingleVarCalculatorComponent,
     BatchVarCalculatorComponent,
     AppFooter,
-    TabViewModule,
+    TabsModule,
   ],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.scss",
 })
-export class AppComponent {}
+export class AppComponent {
+  activeTab: number = 0;
+}

@@ -10,7 +10,7 @@ import { DividerModule } from "primeng/divider";
 import { DropdownModule } from "primeng/dropdown";
 import { InputNumberModule } from "primeng/inputnumber";
 import { CardModule } from "primeng/card";
-import { TabViewModule } from "primeng/tabview";
+import { TabsModule } from "primeng/tabs";
 import { Subject, takeUntil } from "rxjs";
 
 import { VarApiService } from "../../services/var-api.service";
@@ -39,7 +39,7 @@ interface MethodOption {
     DropdownModule,
     InputNumberModule,
     CardModule,
-    TabViewModule,
+    TabsModule,
   ],
   templateUrl: "./single-var-calculator.component.html",
 })
@@ -53,6 +53,7 @@ export class SingleVarCalculatorComponent implements OnInit, OnDestroy {
   error: string = "";
   loading: boolean = false;
   parsedNumbers: number[] = [];
+  activeResultTab: number = 0;
 
   private destroy$ = new Subject<void>();
 
