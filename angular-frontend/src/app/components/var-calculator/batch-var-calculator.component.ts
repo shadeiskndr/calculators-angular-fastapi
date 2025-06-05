@@ -5,11 +5,15 @@ import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
 import { TableModule } from "primeng/table";
 import { InputTextModule } from "primeng/inputtext";
-import { DropdownModule } from "primeng/dropdown";
+import { SelectModule } from "primeng/select";
 import { InputNumberModule } from "primeng/inputnumber";
 import { MessageModule } from "primeng/message";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { TooltipModule } from "primeng/tooltip";
+import { IftaLabelModule } from "primeng/iftalabel";
+import { Textarea } from "primeng/inputtextarea";
+import { InputIconModule } from "primeng/inputicon";
+import { IconFieldModule } from "primeng/iconfield";
 import { Subject, takeUntil } from "rxjs";
 
 import { VarApiService } from "../../services/var-api.service";
@@ -35,11 +39,15 @@ interface DatasetInput {
     CardModule,
     TableModule,
     InputTextModule,
-    DropdownModule,
+    SelectModule,
     InputNumberModule,
     MessageModule,
     ProgressSpinnerModule,
     TooltipModule,
+    IftaLabelModule,
+    Textarea,
+    InputIconModule,
+    IconFieldModule,
   ],
   templateUrl: "./batch-var-calculator.component.html",
 })

@@ -1,57 +1,49 @@
 <div class="flex flex-col gap-6">
-  <!-- Header Actions Card -->
   <div
-    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+    class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 p-4 bg-surface-50 dark:bg-surface-800 rounded-lg"
   >
+    <!-- Buttons Group -->
     <div
-      class="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between mb-4"
+      class="flex flex-col sm:flex-row gap-2 lg:w-auto w-full order-2 lg:order-1"
     >
-      <div class="flex flex-col gap-1">
-        <span class="font-medium text-xl">Batch VaR Calculator</span>
-        <span class="text-surface-600 dark:text-surface-400 text-sm">
-          Calculate Value at Risk for multiple datasets simultaneously
-        </span>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2 sm:w-auto w-full">
-        <p-button
-          label="Add Dataset"
-          icon="pi pi-plus"
-          (onClick)="addDataset()"
-          [disabled]="datasets.length >= 10"
-          size="small"
-          class="sm:w-auto w-full"
-        />
-        <p-button
-          label="Calculate All"
-          icon="pi pi-calculator"
-          (onClick)="calculateBatchVaR()"
-          [loading]="loading"
-          [disabled]="!hasValidDatasets()"
-          severity="success"
-          size="small"
-          class="sm:w-auto w-full"
-        />
-        <p-button
-          label="Clear All"
-          icon="pi pi-trash"
-          (onClick)="clearAll()"
-          severity="danger"
-          outlined
-          size="small"
-          class="sm:w-auto w-full"
-        />
-      </div>
+      <p-button
+        label="Add Dataset"
+        icon="pi pi-plus"
+        (onClick)="addDataset()"
+        [disabled]="datasets.length >= 10"
+        size="small"
+        fluid
+      />
+      <p-button
+        label="Calculate All"
+        icon="pi pi-calculator"
+        (onClick)="calculateBatchVaR()"
+        [loading]="loading"
+        [disabled]="!hasValidDatasets()"
+        severity="success"
+        size="small"
+        fluid
+      />
+      <p-button
+        label="Clear All"
+        icon="pi pi-trash"
+        (onClick)="clearAll()"
+        severity="danger"
+        outlined
+        size="small"
+        fluid
+      />
     </div>
 
     <!-- Dataset Count Info -->
     <div
-      class="flex items-center gap-4 text-sm text-surface-600 dark:text-surface-400"
+      class="flex flex-col xs:flex-row items-center gap-3 xs:gap-4 text-sm text-surface-600 dark:text-surface-400 lg:w-auto w-full lg:justify-end justify-center order-1 lg:order-2 pb-2 lg:pb-0 border-b lg:border-b-0 border-surface-200 dark:border-surface-600"
     >
-      <span class="flex items-center gap-2">
+      <span class="flex items-center gap-2 whitespace-nowrap">
         <i class="pi pi-database"></i>
         {{ datasets.length }}/10 datasets
       </span>
-      <span class="flex items-center gap-2">
+      <span class="flex items-center gap-2 whitespace-nowrap">
         <i class="pi pi-check-circle text-green-500"></i>
         {{ getValidDatasetsCount() }} valid
       </span>
@@ -67,7 +59,7 @@
       <span
         class="text-xs text-surface-600 dark:text-surface-400 bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded"
       >
-        Minimum 10 data points per dataset
+        Minimum 10 P&L numbers per dataset
       </span>
     </div>
 
@@ -75,10 +67,10 @@
       <p-table [value]="datasets" styleClass="p-datatable-sm">
         <ng-template pTemplate="header">
           <tr>
-            <th class="min-w-[150px]">Dataset Name</th>
-            <th class="min-w-[200px]">Data Points</th>
-            <th class="min-w-[120px]">Confidence %</th>
-            <th class="min-w-[120px]">Method</th>
+            <th class="min-w-[200px]">Dataset Name</th>
+            <th class="min-w-[350px]">P&L Numbers</th>
+            <th class="min-w-[150px]">Confidence Level</th>
+            <th class="min-w-[180px]">Calculation Method</th>
             <th class="w-[80px]">Status</th>
             <th class="w-[80px]">Actions</th>
           </tr>
@@ -86,60 +78,95 @@
         <ng-template pTemplate="body" let-dataset let-i="rowIndex">
           <tr>
             <td>
-              <input
-                pInputText
-                [(ngModel)]="dataset.name"
-                class="w-full p-inputtext-sm"
-                placeholder="Enter dataset name"
-              />
+              <p-iftalabel class="w-full">
+                <input
+                  pInputText
+                  [(ngModel)]="dataset.name"
+                  [id]="'dataset-name-' + dataset.id"
+                  class="w-full"
+                  autocomplete="off"
+                />
+                <label [for]="'dataset-name-' + dataset.id">Dataset Name</label>
+              </p-iftalabel>
             </td>
             <td>
-              <textarea
-                pInputText
-                [(ngModel)]="dataset.numbersInput"
-                (ngModelChange)="validateDataset(dataset)"
-                rows="2"
-                class="w-full resize-none p-inputtext-sm"
-                placeholder="Enter comma-separated numbers: 1.5, 2.3, -0.8, 4.2..."
-              ></textarea>
-              <div class="text-xs text-surface-600 dark:text-surface-400 mt-1">
-                {{ dataset.parsedNumbers.length }} points
-              </div>
+              <p-iftalabel class="w-full mt-6">
+                <input
+                  pInputText
+                  [(ngModel)]="dataset.numbersInput"
+                  (ngModelChange)="validateDataset(dataset)"
+                  [id]="'dataset-numbers-' + dataset.id"
+                  class="w-full"
+                  autocomplete="off"
+                />
+                <label [for]="'dataset-numbers-' + dataset.id"
+                  >P&L Numbers (comma-separated, min 10 values)</label
+                >
+              </p-iftalabel>
+              <small class="text-surface-500 dark:text-surface-400 ml-1.5">
+                Parsed values: {{ dataset.parsedNumbers.length }} | Valid:
+                <span
+                  [ngClass]="{
+                    'text-green-600 dark:text-green-400 font-semibold':
+                      dataset.isValid,
+                    'text-red-400 dark:text-red-300 font-semibold':
+                      !dataset.isValid
+                  }"
+                >
+                  {{ dataset.isValid }}
+                </span>
+              </small>
             </td>
             <td>
-              <p-inputNumber
-                [(ngModel)]="dataset.confidenceLevel"
-                (ngModelChange)="validateDataset(dataset)"
-                [min]="80"
-                [max]="99.99"
-                [minFractionDigits]="1"
-                [maxFractionDigits]="2"
-                suffix="%"
-                size="small"
-                styleClass="w-full"
-              />
+              <p-iftalabel class="w-full">
+                <p-inputnumber
+                  [(ngModel)]="dataset.confidenceLevel"
+                  (ngModelChange)="validateDataset(dataset)"
+                  [inputId]="'confidence-' + dataset.id"
+                  [min]="80"
+                  [max]="99.99"
+                  [minFractionDigits]="1"
+                  [maxFractionDigits]="2"
+                  suffix="%"
+                  styleClass="w-full"
+                />
+                <label [for]="'confidence-' + dataset.id"
+                  >Confidence Level</label
+                >
+              </p-iftalabel>
             </td>
             <td>
-              <p-dropdown
-                [(ngModel)]="dataset.method"
-                [options]="methodOptions"
-                optionLabel="label"
-                optionValue="value"
-                styleClass="w-full p-dropdown-sm"
-              />
+              <p-iftalabel class="w-full">
+                <p-select
+                  [(ngModel)]="dataset.method"
+                  [options]="methodOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [inputId]="'method-' + dataset.id"
+                  styleClass="w-full"
+                  appendTo="body"
+                />
+                <label [for]="'method-' + dataset.id">Method</label>
+              </p-iftalabel>
             </td>
             <td class="text-center">
               <span
-                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm"
                 [ngClass]="{
                   'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400':
                     dataset.isValid,
                   'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400':
                     !dataset.isValid
                 }"
+                [pTooltip]="
+                  dataset.isValid
+                    ? 'Dataset is valid'
+                    : 'Dataset needs at least 10 P&L numbers and valid confidence level'
+                "
+                tooltipPosition="top"
               >
                 <i
-                  class="pi text-xs"
+                  class="pi text-sm"
                   [ngClass]="{
                     'pi-check': dataset.isValid,
                     'pi-times': !dataset.isValid
@@ -215,7 +242,7 @@
             <th class="min-w-[120px]">VaR Value</th>
             <th class="w-[100px]">Confidence</th>
             <th class="min-w-[120px]">Method</th>
-            <th class="w-[150px]">Sample Size</th>
+            <th class="w-[100px]">Sample Size</th>
             <th class="min-w-[200px]">Error Details</th>
           </tr>
         </ng-template>
