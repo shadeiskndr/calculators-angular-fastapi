@@ -9,6 +9,7 @@ import { DropdownModule } from "primeng/dropdown";
 import { InputNumberModule } from "primeng/inputnumber";
 import { MessageModule } from "primeng/message";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
+import { TooltipModule } from "primeng/tooltip";
 import { Subject, takeUntil } from "rxjs";
 
 import { VarApiService } from "../../services/var-api.service";
@@ -38,6 +39,7 @@ interface DatasetInput {
     InputNumberModule,
     MessageModule,
     ProgressSpinnerModule,
+    TooltipModule,
   ],
   templateUrl: "./batch-var-calculator.component.html",
 })
@@ -51,9 +53,9 @@ export class BatchVarCalculatorComponent implements OnDestroy {
   private nextId = 1;
 
   methodOptions = [
-    { label: "Historical", value: VaRMethod.HISTORICAL },
-    { label: "Parametric", value: VaRMethod.PARAMETRIC },
-    { label: "Monte Carlo", value: VaRMethod.MONTE_CARLO },
+    { label: "Historical Simulation", value: VaRMethod.HISTORICAL },
+    { label: "Parametric (Normal)", value: VaRMethod.PARAMETRIC },
+    { label: "Monte Carlo Simulation", value: VaRMethod.MONTE_CARLO },
   ];
 
   constructor(private varApiService: VarApiService) {
@@ -83,32 +85,62 @@ export class BatchVarCalculatorComponent implements OnDestroy {
 
   removeDataset(index: number) {
     this.datasets.splice(index, 1);
+    // Update results if they exist
+    if (this.results.length > 0) {
+      this.results = this.results.filter(
+        (result) => result.dataset_index !== index
+      );
+      // Update indices for remaining results
+      this.results = this.results.map((result) => ({
+        ...result,
+        dataset_index:
+          result.dataset_index > index
+            ? result.dataset_index - 1
+            : result.dataset_index,
+      }));
+    }
   }
 
   clearAll() {
     this.datasets = [];
     this.results = [];
     this.error = "";
+    this.addDataset(); // Add one empty dataset
   }
 
   validateDataset(dataset: DatasetInput) {
+    // Parse numbers from input
     dataset.parsedNumbers = dataset.numbersInput
       .split(",")
       .map((n) => parseFloat(n.trim()))
       .filter((n) => !isNaN(n) && isFinite(n));
 
+    // Validate dataset
     dataset.isValid =
       dataset.parsedNumbers.length >= 10 &&
       dataset.confidenceLevel >= 80 &&
-      dataset.confidenceLevel <= 99.99;
+      dataset.confidenceLevel <= 99.99 &&
+      dataset.name.trim().length > 0;
   }
 
   hasValidDatasets(): boolean {
     return this.datasets.length > 0 && this.datasets.some((d) => d.isValid);
   }
 
+  getValidDatasetsCount(): number {
+    return this.datasets.filter((d) => d.isValid).length;
+  }
+
   getDatasetName(index: number): string {
     return this.datasets[index]?.name || `Dataset ${index + 1}`;
+  }
+
+  getSuccessfulResults(): number {
+    return this.results.filter((r) => r.status === "success").length;
+  }
+
+  getFailedResults(): number {
+    return this.results.filter((r) => r.status === "failed").length;
   }
 
   calculateBatchVaR() {
@@ -119,7 +151,8 @@ export class BatchVarCalculatorComponent implements OnDestroy {
     const validDatasets = this.datasets.filter((d) => d.isValid);
 
     if (validDatasets.length === 0) {
-      this.error = "No valid datasets to calculate";
+      this.error =
+        "No valid datasets to calculate. Please ensure each dataset has at least 10 data points and a valid confidence level.";
       this.loading = false;
       return;
     }
@@ -137,10 +170,29 @@ export class BatchVarCalculatorComponent implements OnDestroy {
         next: (response) => {
           this.results = response.batch_results;
           this.loading = false;
+
+          // Show success message if all calculations succeeded
+          const successCount = this.getSuccessfulResults();
+          const totalCount = this.results.length;
+
+          if (successCount === totalCount) {
+            // All calculations successful
+            console.log(
+              `Successfully calculated VaR for all ${totalCount} datasets`
+            );
+          } else {
+            // Some calculations failed
+            console.warn(
+              `${successCount}/${totalCount} calculations succeeded`
+            );
+          }
         },
         error: (err) => {
-          this.error = err.message;
+          this.error =
+            err.message ||
+            "An unexpected error occurred during batch calculation.";
           this.loading = false;
+          console.error("Batch VaR calculation error:", err);
         },
       });
   }

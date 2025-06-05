@@ -1,150 +1,337 @@
-<div class="flex flex-col gap-4">
-  <!-- Add Dataset Section -->
-  <div class="flex gap-2">
-    <p-button
-      label="Add Dataset"
-      icon="pi pi-plus"
-      (onClick)="addDataset()"
-      [disabled]="datasets.length >= 10"
-    />
-    <p-button
-      label="Calculate All"
-      icon="pi pi-calculator"
-      (onClick)="calculateBatchVaR()"
-      [loading]="loading"
-      [disabled]="!hasValidDatasets()"
-      severity="success"
-    />
-    <p-button
-      label="Clear All"
-      icon="pi pi-trash"
-      (onClick)="clearAll()"
-      severity="danger"
-      outlined
-    />
+<div class="flex flex-col gap-6">
+  <!-- Header Actions Card -->
+  <div
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div
+      class="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between mb-4"
+    >
+      <div class="flex flex-col gap-1">
+        <span class="font-medium text-xl">Batch VaR Calculator</span>
+        <span class="text-surface-600 dark:text-surface-400 text-sm">
+          Calculate Value at Risk for multiple datasets simultaneously
+        </span>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2 sm:w-auto w-full">
+        <p-button
+          label="Add Dataset"
+          icon="pi pi-plus"
+          (onClick)="addDataset()"
+          [disabled]="datasets.length >= 10"
+          size="small"
+          class="sm:w-auto w-full"
+        />
+        <p-button
+          label="Calculate All"
+          icon="pi pi-calculator"
+          (onClick)="calculateBatchVaR()"
+          [loading]="loading"
+          [disabled]="!hasValidDatasets()"
+          severity="success"
+          size="small"
+          class="sm:w-auto w-full"
+        />
+        <p-button
+          label="Clear All"
+          icon="pi pi-trash"
+          (onClick)="clearAll()"
+          severity="danger"
+          outlined
+          size="small"
+          class="sm:w-auto w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Dataset Count Info -->
+    <div
+      class="flex items-center gap-4 text-sm text-surface-600 dark:text-surface-400"
+    >
+      <span class="flex items-center gap-2">
+        <i class="pi pi-database"></i>
+        {{ datasets.length }}/10 datasets
+      </span>
+      <span class="flex items-center gap-2">
+        <i class="pi pi-check-circle text-green-500"></i>
+        {{ getValidDatasetsCount() }} valid
+      </span>
+    </div>
   </div>
 
-  <!-- Datasets Table -->
-  <p-table [value]="datasets" styleClass="p-datatable-sm">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Name</th>
-        <th>Data</th>
-        <th>Confidence</th>
-        <th>Method</th>
-        <th>Valid</th>
-        <th>Actions</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-dataset let-i="rowIndex">
-      <tr>
-        <td>
-          <input
-            pInputText
-            [(ngModel)]="dataset.name"
-            class="w-full"
-            placeholder="Dataset name"
-          />
-        </td>
-        <td>
-          <textarea
-            pInputText
-            [(ngModel)]="dataset.numbersInput"
-            (ngModelChange)="validateDataset(dataset)"
-            rows="2"
-            class="w-full resize-none"
-            placeholder="1,2,3,4,5..."
-          ></textarea>
-        </td>
-        <td>
-          <p-inputNumber
-            [(ngModel)]="dataset.confidenceLevel"
-            (ngModelChange)="validateDataset(dataset)"
-            [min]="80"
-            [max]="99.99"
-            suffix="%"
-            styleClass="w-full"
-          />
-        </td>
-        <td>
-          <p-dropdown
-            [(ngModel)]="dataset.method"
-            [options]="methodOptions"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="w-full"
-          />
-        </td>
-        <td>
-          <i
-            class="pi"
-            [ngClass]="{
-              'pi-check text-green-500': dataset.isValid,
-              'pi-times text-red-500': !dataset.isValid
-            }"
-          ></i>
-        </td>
-        <td>
-          <p-button
-            icon="pi pi-trash"
-            (onClick)="removeDataset(i)"
-            severity="danger"
-            text
-            size="small"
-          />
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <!-- Datasets Configuration Card -->
+  <div
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-medium text-base">Dataset Configuration</span>
+      <span
+        class="text-xs text-surface-600 dark:text-surface-400 bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded"
+      >
+        Minimum 10 data points per dataset
+      </span>
+    </div>
 
-  <!-- Results Section -->
-  <div *ngIf="results.length > 0" class="mt-4">
-    <h3 class="text-lg font-semibold mb-3">Batch Results</h3>
-    <p-table [value]="results" styleClass="p-datatable-sm">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Dataset</th>
-          <th>Status</th>
-          <th>VaR</th>
-          <th>Confidence</th>
-          <th>Method</th>
-          <th>Sample Size</th>
-          <th>Error</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-result>
-        <tr>
-          <td>{{ getDatasetName(result.dataset_index) }}</td>
-          <td>
-            <span
-              class="px-2 py-1 rounded text-xs"
-              [ngClass]="{
-                'bg-green-100 text-green-800': result.status === 'success',
-                'bg-red-100 text-red-800': result.status === 'failed'
-              }"
-            >
-              {{ result.status }}
-            </span>
-          </td>
-          <td>{{ result.result?.var | number : "1.4-4" }}</td>
-          <td>{{ result.result?.confidence_level }}</td>
-          <td>{{ result.result?.method }}</td>
-          <td>{{ result.result?.sample_size }}</td>
-          <td>
-            <span *ngIf="result.error" class="text-red-600 text-xs">
-              {{ result.error }}
-            </span>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+    <div class="overflow-x-auto">
+      <p-table [value]="datasets" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="min-w-[150px]">Dataset Name</th>
+            <th class="min-w-[200px]">Data Points</th>
+            <th class="min-w-[120px]">Confidence %</th>
+            <th class="min-w-[120px]">Method</th>
+            <th class="w-[80px]">Status</th>
+            <th class="w-[80px]">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-dataset let-i="rowIndex">
+          <tr>
+            <td>
+              <input
+                pInputText
+                [(ngModel)]="dataset.name"
+                class="w-full p-inputtext-sm"
+                placeholder="Enter dataset name"
+              />
+            </td>
+            <td>
+              <textarea
+                pInputText
+                [(ngModel)]="dataset.numbersInput"
+                (ngModelChange)="validateDataset(dataset)"
+                rows="2"
+                class="w-full resize-none p-inputtext-sm"
+                placeholder="Enter comma-separated numbers: 1.5, 2.3, -0.8, 4.2..."
+              ></textarea>
+              <div class="text-xs text-surface-600 dark:text-surface-400 mt-1">
+                {{ dataset.parsedNumbers.length }} points
+              </div>
+            </td>
+            <td>
+              <p-inputNumber
+                [(ngModel)]="dataset.confidenceLevel"
+                (ngModelChange)="validateDataset(dataset)"
+                [min]="80"
+                [max]="99.99"
+                [minFractionDigits]="1"
+                [maxFractionDigits]="2"
+                suffix="%"
+                size="small"
+                styleClass="w-full"
+              />
+            </td>
+            <td>
+              <p-dropdown
+                [(ngModel)]="dataset.method"
+                [options]="methodOptions"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="w-full p-dropdown-sm"
+              />
+            </td>
+            <td class="text-center">
+              <span
+                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs"
+                [ngClass]="{
+                  'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400':
+                    dataset.isValid,
+                  'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400':
+                    !dataset.isValid
+                }"
+              >
+                <i
+                  class="pi text-xs"
+                  [ngClass]="{
+                    'pi-check': dataset.isValid,
+                    'pi-times': !dataset.isValid
+                  }"
+                ></i>
+              </span>
+            </td>
+            <td class="text-center">
+              <p-button
+                icon="pi pi-trash"
+                (onClick)="removeDataset(i)"
+                severity="danger"
+                text
+                size="small"
+                [pTooltip]="'Remove dataset'"
+                tooltipPosition="top"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-8">
+              <div
+                class="flex flex-col items-center gap-3 text-surface-600 dark:text-surface-400"
+              >
+                <i class="pi pi-database text-4xl"></i>
+                <span>No datasets added yet</span>
+                <p-button
+                  label="Add Your First Dataset"
+                  icon="pi pi-plus"
+                  (onClick)="addDataset()"
+                  size="small"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Results Card -->
+  <div
+    *ngIf="results.length > 0"
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-medium text-base">Calculation Results</span>
+      <div class="flex items-center gap-4 text-sm">
+        <span
+          class="flex items-center gap-2 text-green-600 dark:text-green-400"
+        >
+          <i class="pi pi-check-circle"></i>
+          {{ getSuccessfulResults() }} successful
+        </span>
+        <span
+          class="flex items-center gap-2 text-red-600 dark:text-red-400"
+          *ngIf="getFailedResults() > 0"
+        >
+          <i class="pi pi-times-circle"></i>
+          {{ getFailedResults() }} failed
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <p-table [value]="results" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="min-w-[150px]">Dataset</th>
+            <th class="w-[100px]">Status</th>
+            <th class="min-w-[120px]">VaR Value</th>
+            <th class="w-[100px]">Confidence</th>
+            <th class="min-w-[120px]">Method</th>
+            <th class="w-[150px]">Sample Size</th>
+            <th class="min-w-[200px]">Error Details</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-result>
+          <tr>
+            <td class="font-medium">
+              {{ getDatasetName(result.dataset_index) }}
+            </td>
+            <td>
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300':
+                    result.status === 'success',
+                  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300':
+                    result.status === 'failed'
+                }"
+              >
+                <i
+                  class="pi mr-1 text-xs"
+                  [ngClass]="{
+                    'pi-check': result.status === 'success',
+                    'pi-times': result.status === 'failed'
+                  }"
+                ></i>
+                {{ result.status | titlecase }}
+              </span>
+            </td>
+            <td>
+              <span
+                *ngIf="result.result?.var !== undefined"
+                class="font-mono text-sm"
+              >
+                {{ result.result.var | number : "1.4-4" }}
+              </span>
+              <span
+                *ngIf="result.result?.var === undefined"
+                class="text-surface-400"
+                >—</span
+              >
+            </td>
+            <td>
+              <span *ngIf="result.result?.confidence_level">{{
+                result.result.confidence_level
+              }}</span>
+              <span
+                *ngIf="!result.result?.confidence_level"
+                class="text-surface-400"
+                >—</span
+              >
+            </td>
+            <td>
+              <span
+                *ngIf="result.result?.method"
+                class="text-xs bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded"
+              >
+                {{ result.result.method | titlecase }}
+              </span>
+              <span *ngIf="!result.result?.method" class="text-surface-400"
+                >—</span
+              >
+            </td>
+            <td>
+              <span *ngIf="result.result?.sample_size">{{
+                result.result.sample_size
+              }}</span>
+              <span *ngIf="!result.result?.sample_size" class="text-surface-400"
+                >—</span
+              >
+            </td>
+            <td>
+              <span
+                *ngIf="result.error"
+                class="text-red-600 dark:text-red-400 text-xs bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded"
+              >
+                {{ result.error }}
+              </span>
+              <span *ngIf="!result.error" class="text-surface-400">—</span>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
   </div>
 
   <!-- Error Display -->
-  <p-message
+  <div
     *ngIf="error"
-    severity="error"
-    [text]="error"
-    styleClass="w-full"
-  />
+    class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4"
+  >
+    <div class="flex items-start gap-3">
+      <i
+        class="pi pi-exclamation-triangle text-red-600 dark:text-red-400 mt-0.5"
+      ></i>
+      <div class="flex-1">
+        <h4 class="font-medium text-red-800 dark:text-red-200 mb-1">
+          Calculation Error
+        </h4>
+        <p class="text-red-700 dark:text-red-300 text-sm">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div
+    *ngIf="loading"
+    class="fixed inset-0 bg-black/20 dark:bg-black/40 flex items-center justify-center z-50"
+  >
+    <div
+      class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700 flex items-center gap-4"
+    >
+      <p-progressSpinner
+        [style]="{ width: '32px', height: '32px' }"
+        strokeWidth="4"
+      />
+      <span class="font-medium">Calculating VaR for all datasets...</span>
+    </div>
+  </div>
 </div>
