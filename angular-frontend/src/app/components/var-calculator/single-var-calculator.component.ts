@@ -11,9 +11,11 @@ import { DropdownModule } from "primeng/dropdown";
 import { InputNumberModule } from "primeng/inputnumber";
 import { CardModule } from "primeng/card";
 import { TabsModule } from "primeng/tabs";
+import { TableModule } from "primeng/table";
 import { Subject, takeUntil } from "rxjs";
 
 import { VarApiService } from "../../services/var-api.service";
+import { BatchVarCalculatorComponent } from "./batch-var-calculator.component";
 
 import { VaRMethod, VaRRequest, VaRResponse } from "../../models/var.model";
 
@@ -40,10 +42,16 @@ interface MethodOption {
     InputNumberModule,
     CardModule,
     TabsModule,
+    TableModule,
+    BatchVarCalculatorComponent,
   ],
   templateUrl: "./single-var-calculator.component.html",
 })
 export class SingleVarCalculatorComponent implements OnInit, OnDestroy {
+  // Main tab control
+  activeMainTab: number = 0;
+
+  // Single VaR Calculator properties
   numbersInput: string =
     "-2.5, -1.0, 0.5, 1.0, 2.0, 3.0, -3.0, -0.5, 1.5, -1.5, 2.5, -2.0";
   confidenceLevel: number = 95.0;
