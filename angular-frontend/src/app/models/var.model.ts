@@ -35,8 +35,8 @@ export interface BatchVaRRequest {
 
 export interface BatchVaRResult {
   dataset_index: number;
-  result?: VaRResponse;
-  error?: string;
+  result: VaRResponse;
+  error: string;
   status: "success" | "failed";
 }
 
