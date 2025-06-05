@@ -50,7 +50,7 @@
             <label for="method" class="text-sm font-medium"
               >Calculation Method</label
             >
-            <p-dropdown
+            <p-select
               id="method"
               [(ngModel)]="selectedMethod"
               [options]="methodOptions"
@@ -67,19 +67,17 @@
 
         <!-- Data Input Section -->
         <div class="flex flex-col gap-2 mb-4">
-          <p-iftalabel>
-            <textarea
-              pInputText
-              id="numbers"
-              [(ngModel)]="numbersInput"
-              rows="4"
-              class="w-full resize-none min-h-[100px]"
-              style="min-height: 100px; resize: vertical"
-            ></textarea>
-            <label for="numbers"
-              >P&L Numbers (comma-separated, min 10 values)</label
-            >
-          </p-iftalabel>
+          <label for="numbers" class="text-sm font-medium"
+            >P&L Numbers (comma-separated, min 10 values)</label
+          >
+          <textarea
+            pInputText
+            id="numbers"
+            [(ngModel)]="numbersInput"
+            rows="4"
+            class="w-full min-h-[100px]"
+          ></textarea>
+
           <small class="text-surface-500 dark:text-surface-400">
             Example: -2.5, -1.0, 0.5, 1.0, 2.0, 3.0, -3.0, -0.5, 1.5, -1.5, 2.5,
             -2.0

@@ -7,7 +7,7 @@ import { InputTextModule } from "primeng/inputtext";
 import { MessageModule } from "primeng/message";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { DividerModule } from "primeng/divider";
-import { DropdownModule } from "primeng/dropdown";
+import { SelectModule } from "primeng/select";
 import { InputNumberModule } from "primeng/inputnumber";
 import { CardModule } from "primeng/card";
 import { TabsModule } from "primeng/tabs";
@@ -38,7 +38,7 @@ interface MethodOption {
     MessageModule,
     ProgressSpinnerModule,
     DividerModule,
-    DropdownModule,
+    SelectModule,
     InputNumberModule,
     CardModule,
     TabsModule,
