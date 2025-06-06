@@ -79,8 +79,7 @@ export class SingleVarCalculatorComponent implements OnInit, OnDestroy {
     {
       label: "Monte Carlo",
       value: VaRMethod.MONTE_CARLO,
-      description: "Simulation-based approach (coming soon)",
-      disabled: true,
+      description: "Simulation-based approach (10000 simulations)",
     },
   ];
 
