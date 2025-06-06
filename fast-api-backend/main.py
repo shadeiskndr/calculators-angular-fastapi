@@ -181,6 +181,40 @@ def calculate_parametric_var(returns: np.ndarray, confidence_level: float) -> tu
         raise ValueError(f"Failed to calculate parametric VaR: {str(e)}")
 
 
+def calculate_monte_carlo_var(
+    returns: np.ndarray, confidence_level: float, simulations: int = 10000
+) -> tuple:
+    """
+    Calculate VaR using Monte Carlo simulation method.
+    Assumes returns are normally distributed and simulates future returns.
+    """
+    try:
+        mean = np.mean(returns)
+        std = np.std(returns, ddof=1)
+        if std == 0:
+            raise ValueError(
+                "Standard deviation is zero; cannot perform Monte Carlo simulation."
+            )
+
+        # Simulate returns
+        simulated_returns = np.random.normal(loc=mean, scale=std, size=simulations)
+        percentile = 100 - confidence_level
+        var_value = np.percentile(simulated_returns, percentile)
+
+        stats = {
+            "mean": float(mean),
+            "std": float(std),
+            "simulations": simulations,
+            "min_simulated": float(np.min(simulated_returns)),
+            "max_simulated": float(np.max(simulated_returns)),
+        }
+
+        return -var_value, stats  # VaR is typically expressed as positive loss
+    except Exception as e:
+        logger.error(f"Error in Monte Carlo VaR calculation: {str(e)}")
+        raise ValueError(f"Failed to calculate Monte Carlo VaR: {str(e)}")
+
+
 def calculate_skewness(data: np.ndarray) -> float:
     """Calculate skewness of the data"""
     n = len(data)
@@ -251,6 +285,8 @@ def calculate_var(data: Numbers):
             var_value, stats = calculate_historical_var(returns, confidence)
         elif data.method == VaRMethod.PARAMETRIC:
             var_value, stats = calculate_parametric_var(returns, confidence)
+        elif data.method == VaRMethod.MONTE_CARLO:
+            var_value, stats = calculate_monte_carlo_var(returns, confidence)
         else:
             raise HTTPException(
                 status_code=status.HTTP_501_NOT_IMPLEMENTED,
