@@ -185,7 +185,7 @@ def parametric_var_1d(returns: np.ndarray, cl: float):
     std_ret = np.std(returns, ddof=1)
 
     alpha = (100 - cl) / 100  # lower tail
-    z = norm.ppf(alpha)       # negative
+    z = norm.ppf(alpha)  # negative
 
     var = -(mean_ret + z * std_ret)  # positive number in money-loss terms
 
@@ -206,7 +206,7 @@ def monte_carlo_var_1d(returns: np.ndarray, cl: float, sims: int = 10_000):
         raise ValueError("Std=0 – cannot simulate")
 
     sims_ret = np.random.normal(mean_ret, std_ret, size=sims)  # return scenarios
-    pnl = -sims_ret                                            # convert to P/L
+    pnl = -sims_ret  # convert to P/L
 
     var = np.percentile(pnl, cl)  # positive VaR (= loss at CL)
 

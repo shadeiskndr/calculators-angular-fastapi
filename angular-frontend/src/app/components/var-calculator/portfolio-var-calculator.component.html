@@ -1,0 +1,589 @@
+<div class="flex flex-col gap-6">
+  <!-- Configuration Section -->
+  <div
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-medium text-base">Portfolio Configuration</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div class="flex flex-col gap-2">
+        <label for="portfolio-confidence" class="text-sm font-medium"
+          >Confidence Level (%)</label
+        >
+        <p-inputNumber
+          id="portfolio-confidence"
+          [(ngModel)]="confidenceLevel"
+          [min]="80"
+          [max]="99.99"
+          [step]="0.1"
+          suffix="%"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="portfolio-method" class="text-sm font-medium"
+          >Calculation Method</label
+        >
+        <p-select
+          id="portfolio-method"
+          [(ngModel)]="selectedMethod"
+          [options]="methodOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full"
+          placeholder="Select method"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2" *ngIf="selectedMethod === 'monte_carlo'">
+        <label for="portfolio-simulations" class="text-sm font-medium"
+          >Simulations</label
+        >
+        <p-inputNumber
+          id="portfolio-simulations"
+          [(ngModel)]="simulations"
+          [min]="1000"
+          [max]="100000"
+          [step]="1000"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Portfolio Summary -->
+    <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="flex justify-between">
+          <span class="text-surface-600 dark:text-surface-300"
+            >Total Portfolio Value:</span
+          >
+          <span class="font-medium">{{
+            getTotalPortfolioValue() | currency
+          }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-surface-600 dark:text-surface-300">Positions:</span>
+          <span class="font-medium">{{ positions.length }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-surface-600 dark:text-surface-300"
+            >Risk Factors:</span
+          >
+          <span class="font-medium">{{ riskFactors.length }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Positions Section -->
+  <div
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-medium text-base">Portfolio Positions</span>
+      <p-button
+        label="Add Position"
+        icon="pi pi-plus"
+        (onClick)="addPosition()"
+        size="small"
+      />
+    </div>
+
+    <div class="overflow-x-auto">
+      <p-table [value]="positions" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="min-w-[200px]">Position ID</th>
+            <th class="min-w-[150px]">Current Value</th>
+            <th class="min-w-[300px]" *ngFor="let rf of riskFactors">
+              {{ rf.name }} Sensitivity
+            </th>
+            <th class="w-[80px]">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-position let-i="rowIndex">
+          <tr>
+            <td>
+              <input
+                pInputText
+                [(ngModel)]="position.id"
+                class="w-full"
+                placeholder="Position ID"
+              />
+            </td>
+            <td>
+              <p-inputNumber
+                [(ngModel)]="position.current_value"
+                mode="currency"
+                currency="USD"
+                styleClass="w-full"
+              />
+            </td>
+            <td *ngFor="let rf of riskFactors">
+              <p-inputNumber
+                [(ngModel)]="position.sensitivities[rf.name]"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="6"
+                styleClass="w-full"
+              />
+            </td>
+            <td class="text-center">
+              <p-button
+                icon="pi pi-trash"
+                (onClick)="removePosition(i)"
+                severity="danger"
+                text
+                size="small"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td
+              [attr.colspan]="3 + riskFactors.length"
+              class="text-center py-8"
+            >
+              <div
+                class="flex flex-col items-center gap-3 text-surface-600 dark:text-surface-400"
+              >
+                <i class="pi pi-briefcase text-4xl"></i>
+                <span>No positions added yet</span>
+                <p-button
+                  label="Add Your First Position"
+                  icon="pi pi-plus"
+                  (onClick)="addPosition()"
+                  size="small"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Risk Factors Section -->
+  <div
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-medium text-base">Risk Factors</span>
+      <p-button
+        label="Add Risk Factor"
+        icon="pi pi-plus"
+        (onClick)="addRiskFactor()"
+        size="small"
+      />
+    </div>
+
+    <div class="overflow-x-auto">
+      <p-table [value]="riskFactors" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="min-w-[200px]">Risk Factor Name</th>
+            <th class="min-w-[400px]">Historical Returns (comma-separated)</th>
+            <th class="w-[100px]">Data Points</th>
+            <th class="w-[80px]">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-riskFactor let-i="rowIndex">
+          <tr>
+            <td>
+              <input
+                pInputText
+                [(ngModel)]="riskFactor.name"
+                class="w-full"
+                placeholder="Risk Factor Name"
+              />
+            </td>
+            <td>
+              <textarea
+                pInputText
+                [ngModel]="riskFactor.historical_returns.join(', ')"
+                (ngModelChange)="
+                  riskFactor.historical_returns = parseHistoricalReturns($event)
+                "
+                rows="2"
+                class="w-full"
+                placeholder="0.01, -0.02, 0.015, ..."
+              ></textarea>
+            </td>
+            <td class="text-center">
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                [ngClass]="{
+                  'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300':
+                    riskFactor.historical_returns.length >= 10,
+                  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300':
+                    riskFactor.historical_returns.length < 10
+                }"
+              >
+                {{ riskFactor.historical_returns.length }}
+              </span>
+            </td>
+            <td class="text-center">
+              <p-button
+                icon="pi pi-trash"
+                (onClick)="removeRiskFactor(i)"
+                severity="danger"
+                text
+                size="small"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center py-8">
+              <div
+                class="flex flex-col items-center gap-3 text-surface-600 dark:text-surface-400"
+              >
+                <i class="pi pi-chart-line text-4xl"></i>
+                <span>No risk factors added yet</span>
+                <p-button
+                  label="Add Your First Risk Factor"
+                  icon="pi pi-plus"
+                  (onClick)="addRiskFactor()"
+                  size="small"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <!-- Calculate Button -->
+  <div class="text-center">
+    <p-button
+      label="Calculate Portfolio VaR"
+      icon="pi pi-calculator"
+      (onClick)="calculatePortfolioVaR()"
+      [loading]="loading"
+      [disabled]="!isValidConfiguration()"
+      size="large"
+      styleClass="px-8"
+    />
+  </div>
+
+  <!-- Results Section -->
+  <div
+    *ngIf="result"
+    class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <span class="font-medium text-base">Portfolio VaR Results</span>
+      <i class="pi pi-chart-bar text-primary"></i>
+    </div>
+
+    <p-tabs [value]="activeResultTab" scrollable>
+      <p-tablist>
+        <p-tab [value]="0">
+          <i class="pi pi-chart-bar mr-2"></i>
+          VaR Results
+        </p-tab>
+        <p-tab [value]="1" *ngIf="result.additional_stats">
+          <i class="pi pi-chart-line mr-2"></i>
+          Portfolio Statistics
+        </p-tab>
+        <p-tab [value]="2">
+          <i class="pi pi-info-circle mr-2"></i>
+          Calculation Details
+        </p-tab>
+      </p-tablist>
+
+      <p-tabpanels>
+        <!-- Main Results Tab -->
+        <p-tabpanel [value]="0">
+          <div class="bg-primary-50 dark:bg-primary-900/20 p-6 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div class="text-center">
+                <div class="text-3xl font-bold text-primary mb-2">
+                  {{ result.var | currency : "USD" : "symbol" : "1.0-0" }}
+                </div>
+                <div class="text-sm text-surface-600 dark:text-surface-300">
+                  Portfolio VaR
+                </div>
+              </div>
+              <div class="text-center">
+                <div
+                  class="text-2xl font-semibold text-surface-900 dark:text-surface-0 mb-2"
+                >
+                  {{ result.confidence_level }}%
+                </div>
+                <div class="text-sm text-surface-600 dark:text-surface-300">
+                  Confidence Level
+                </div>
+              </div>
+              <div class="text-center">
+                <div
+                  class="text-2xl font-semibold text-surface-900 dark:text-surface-0 mb-2"
+                >
+                  {{ result.method | titlecase }}
+                </div>
+                <div class="text-sm text-surface-600 dark:text-surface-300">
+                  Calculation Method
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Total Portfolio Value:</span
+              >
+              <span class="font-medium">{{
+                result.total_portfolio_value | currency
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >VaR as % of Portfolio:</span
+              >
+              <span class="font-medium"
+                >{{
+                  (result.var / result.total_portfolio_value) * 100
+                    | number : "1.2-2"
+                }}%</span
+              >
+            </div>
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Number of Positions:</span
+              >
+              <span class="font-medium">{{ result.positions_count }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Risk Factors:</span
+              >
+              <span class="font-medium">{{ result.risk_factors_count }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+              *ngIf="result.simulations"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Simulations:</span
+              >
+              <span class="font-medium">{{ result.simulations | number }}</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Portfolio Statistics Tab -->
+        <p-tabpanel [value]="1" *ngIf="result.additional_stats">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+              *ngIf="result.additional_stats.expected_return !== undefined"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Expected Return:</span
+              >
+              <span class="font-medium">{{
+                result.additional_stats.expected_return | number : "1.4-4"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+              *ngIf="result.additional_stats.volatility !== undefined"
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Portfolio Volatility:</span
+              >
+              <span class="font-medium">{{
+                result.additional_stats.volatility | number : "1.4-4"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
+              *ngIf="
+                result.additional_stats.diversification_ratio !== undefined
+              "
+            >
+              <span class="text-sm text-surface-600 dark:text-surface-300"
+                >Diversification Ratio:</span
+              >
+              <span class="font-medium">{{
+                result.additional_stats.diversification_ratio | number : "1.4-4"
+              }}</span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Calculation Details Tab -->
+        <p-tabpanel [value]="2">
+          <div class="space-y-4">
+            <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+              <h4 class="font-medium mb-3">Portfolio Composition</h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="border-b border-surface-200 dark:border-surface-600"
+                    >
+                      <th class="text-left py-2">Position</th>
+                      <th class="text-right py-2">Value</th>
+                      <th class="text-right py-2">Weight</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let position of positions"
+                      class="border-b border-surface-100 dark:border-surface-700"
+                    >
+                      <td class="py-2">{{ position.id }}</td>
+                      <td class="text-right py-2">
+                        {{ position.current_value | currency }}
+                      </td>
+                      <td class="text-right py-2">
+                        {{
+                          (position.current_value / getTotalPortfolioValue()) *
+                            100 | number : "1.1-1"
+                        }}%
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+              <h4 class="font-medium mb-3">Risk Factor Sensitivities</h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="border-b border-surface-200 dark:border-surface-600"
+                    >
+                      <th class="text-left py-2">Position</th>
+                      <th
+                        class="text-right py-2"
+                        *ngFor="let rf of riskFactors"
+                      >
+                        {{ rf.name }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let position of positions"
+                      class="border-b border-surface-100 dark:border-surface-700"
+                    >
+                      <td class="py-2">{{ position.id }}</td>
+                      <td
+                        class="text-right py-2"
+                        *ngFor="let rf of riskFactors"
+                      >
+                        {{ position.sensitivities[rf.name] | number : "1.0-6" }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+              <h4 class="font-medium mb-3">Risk Factor Data Summary</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                  *ngFor="let rf of riskFactors"
+                  class="bg-surface-0 dark:bg-surface-900 p-3 rounded border"
+                >
+                  <div class="font-medium text-sm mb-2">{{ rf.name }}</div>
+                  <div class="text-xs text-surface-600 dark:text-surface-300">
+                    <div>Data Points: {{ rf.historical_returns.length }}</div>
+                    <div>
+                      Mean:
+                      {{
+                        getRiskFactorMean(rf.historical_returns)
+                          | number : "1.6-6"
+                      }}
+                    </div>
+                    <div>
+                      Min:
+                      {{
+                        getRiskFactorMin(rf.historical_returns)
+                          | number : "1.6-6"
+                      }}
+                    </div>
+                    <div>
+                      Max:
+                      {{
+                        getRiskFactorMax(rf.historical_returns)
+                          | number : "1.6-6"
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+  <!-- Error Display -->
+  <div
+    *ngIf="error"
+    class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4"
+  >
+    <div class="flex items-start gap-3">
+      <i
+        class="pi pi-exclamation-triangle text-red-600 dark:text-red-400 mt-0.5"
+      ></i>
+      <div class="flex-1">
+        <h4 class="font-medium text-red-800 dark:text-red-200 mb-1">
+          Portfolio VaR Calculation Error
+        </h4>
+        <p class="text-red-700 dark:text-red-300 text-sm">{{ error }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Information Section -->
+  <div
+    class="text-xs text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800 p-4 rounded-lg"
+  >
+    <p>
+      <strong>About Portfolio VaR:</strong> Portfolio Value at Risk considers
+      correlations between risk factors and position sensitivities to provide a
+      comprehensive risk measure.
+    </p>
+    <p class="mt-2"><strong>Methods:</strong></p>
+    <ul class="list-disc list-inside ml-2 mt-1">
+      <li>
+        <strong>Historical:</strong> Uses actual historical correlations and
+        distributions
+      </li>
+      <li>
+        <strong>Parametric:</strong> Assumes multivariate normal distribution
+        with estimated covariance matrix
+      </li>
+      <li>
+        <strong>Monte Carlo:</strong> Simulates portfolio returns using
+        historical parameters
+      </li>
+    </ul>
+    <p class="mt-2">
+      <strong>Requirements:</strong> Each risk factor needs at least 10
+      historical data points for reliable calculations.
+    </p>
+  </div>
+</div>

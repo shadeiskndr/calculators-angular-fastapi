@@ -61,3 +61,37 @@ export interface ApiInfoResponse {
   docs: string;
   health: string;
 }
+
+export interface Position {
+  id: string;
+  current_value: number;
+  sensitivities: { [riskFactor: string]: number };
+}
+
+export interface RiskFactor {
+  name: string;
+  historical_returns: number[];
+}
+
+export interface PortfolioVaRRequest {
+  positions: Position[];
+  risk_factors: RiskFactor[];
+  method: "historical" | "parametric" | "monte_carlo";
+  confidence_level: number;
+  simulations?: number; // Optional, for Monte Carlo
+}
+
+export interface PortfolioVaRResponse {
+  var: number;
+  confidence_level: number;
+  method: string;
+  total_portfolio_value: number;
+  positions_count: number;
+  risk_factors_count: number;
+  simulations?: number;
+  additional_stats?: {
+    expected_return?: number;
+    volatility?: number;
+    diversification_ratio?: number;
+  };
+}

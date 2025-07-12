@@ -5,11 +5,12 @@ import { catchError, retry } from "rxjs/operators";
 import {
   VaRRequest,
   VaRResponse,
-  BatchVaRRequest,
   BatchVaRResponse,
   ApiError,
   HealthCheckResponse,
   ApiInfoResponse,
+  PortfolioVaRRequest,
+  PortfolioVaRResponse,
 } from "../models/var.model";
 
 @Injectable({
@@ -42,6 +43,14 @@ export class VarApiService {
     return this.http
       .get<ApiInfoResponse>(`${this.apiUrl}/`)
       .pipe(catchError(this.handleError));
+  }
+
+  calculatePortfolioVaR(
+    request: PortfolioVaRRequest
+  ): Observable<PortfolioVaRResponse> {
+    return this.http
+      .post<PortfolioVaRResponse>(`${this.apiUrl}/portfolioVaR`, request)
+      .pipe(retry(1), catchError(this.handleError));
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {

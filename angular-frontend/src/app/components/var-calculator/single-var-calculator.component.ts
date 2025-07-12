@@ -16,6 +16,7 @@ import { Subject, takeUntil } from "rxjs";
 
 import { VarApiService } from "../../services/var-api.service";
 import { BatchVarCalculatorComponent } from "./batch-var-calculator.component";
+import { PortfolioVarCalculatorComponent } from "./portfolio-var-calculator.component";
 
 import { VaRMethod, VaRRequest, VaRResponse } from "../../models/var.model";
 
@@ -44,6 +45,7 @@ interface MethodOption {
     TabsModule,
     TableModule,
     BatchVarCalculatorComponent,
+    PortfolioVarCalculatorComponent,
   ],
   templateUrl: "./single-var-calculator.component.html",
 })

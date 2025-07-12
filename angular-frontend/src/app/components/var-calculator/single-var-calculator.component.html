@@ -12,6 +12,10 @@
         <i class="pi pi-table mr-2"></i>
         Batch VaR Calculator
       </p-tab>
+      <p-tab [value]="3">
+        <i class="pi pi-briefcase mr-2"></i>
+        Portfolio VaR Calculator
+      </p-tab>
       <p-tab [value]="2">
         <i class="pi pi-book mr-2"></i>
         API Documentation
@@ -311,8 +315,20 @@
         <batch-var-calculator />
       </p-tabpanel>
 
-      <!-- API Documentation Tab -->
+      <!-- Portfolio VaR Calculator Tab -->
       <p-tabpanel [value]="2">
+        <div class="flex items-center justify-between mb-7 mt-4">
+          <span class="font-medium text-xl"
+            >Portfolio Value at Risk Calculator</span
+          >
+          <i class="pi pi-briefcase text-primary"></i>
+        </div>
+        <!-- Embed the portfolio calculator component -->
+        <portfolio-var-calculator />
+      </p-tabpanel>
+
+      <!-- API Documentation Tab -->
+      <p-tabpanel [value]="3">
         <div class="flex items-center justify-between mb-7 mt-4">
           <span class="font-medium text-xl">API Documentation</span>
           <i class="pi pi-book text-primary"></i>
