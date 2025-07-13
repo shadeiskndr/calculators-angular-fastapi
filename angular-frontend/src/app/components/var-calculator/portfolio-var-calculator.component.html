@@ -99,7 +99,7 @@
             <th class="min-w-[200px]">Position ID</th>
             <th class="min-w-[150px]">Current Value</th>
             <th class="min-w-[300px]" *ngFor="let rf of riskFactors">
-              {{ rf.name }} Sensitivity
+              {{ rf.name }} Exposure ($)
             </th>
             <th class="w-[80px]">Actions</th>
           </tr>
@@ -124,9 +124,11 @@
             </td>
             <td *ngFor="let rf of riskFactors">
               <p-inputNumber
+                mode="currency"
+                currency="USD"
                 [(ngModel)]="position.sensitivities[rf.name]"
                 [minFractionDigits]="0"
-                [maxFractionDigits]="6"
+                [maxFractionDigits]="0"
                 styleClass="w-full"
               />
             </td>
@@ -307,14 +309,14 @@
                   {{ result.var | currency : "USD" : "symbol" : "1.0-0" }}
                 </div>
                 <div class="text-sm text-surface-600 dark:text-surface-300">
-                  Portfolio VaR
+                  Portfolio VaR (Maximum Expected Loss)
                 </div>
               </div>
               <div class="text-center">
                 <div
                   class="text-2xl font-semibold text-surface-900 dark:text-surface-0 mb-2"
                 >
-                  {{ result.confidence_level }}%
+                  {{ result.confidence_level }}
                 </div>
                 <div class="text-sm text-surface-600 dark:text-surface-300">
                   Confidence Level
@@ -324,7 +326,7 @@
                 <div
                   class="text-2xl font-semibold text-surface-900 dark:text-surface-0 mb-2"
                 >
-                  {{ result.method | titlecase }}
+                  {{ result.method }}
                 </div>
                 <div class="text-sm text-surface-600 dark:text-surface-300">
                   Calculation Method
@@ -341,7 +343,8 @@
                 >Total Portfolio Value:</span
               >
               <span class="font-medium">{{
-                result.total_portfolio_value | currency
+                result.additional_stats?.total_portfolio_value ||
+                  getTotalPortfolioValue() | currency
               }}</span>
             </div>
             <div
@@ -352,8 +355,10 @@
               >
               <span class="font-medium"
                 >{{
-                  (result.var / result.total_portfolio_value) * 100
-                    | number : "1.2-2"
+                  (result.var /
+                    (result.additional_stats?.total_portfolio_value ||
+                      getTotalPortfolioValue())) *
+                    100 | number : "1.2-2"
                 }}%</span
               >
             </div>
@@ -363,7 +368,9 @@
               <span class="text-sm text-surface-600 dark:text-surface-300"
                 >Number of Positions:</span
               >
-              <span class="font-medium">{{ result.positions_count }}</span>
+              <span class="font-medium">{{
+                result?.additional_stats?.positions_count
+              }}</span>
             </div>
             <div
               class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
@@ -371,16 +378,20 @@
               <span class="text-sm text-surface-600 dark:text-surface-300"
                 >Risk Factors:</span
               >
-              <span class="font-medium">{{ result.risk_factors_count }}</span>
+              <span class="font-medium">{{
+                result?.additional_stats?.risk_factors_count
+              }}</span>
             </div>
             <div
               class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
-              *ngIf="result.simulations"
+              *ngIf="result?.additional_stats?.simulations"
             >
               <span class="text-sm text-surface-600 dark:text-surface-300"
                 >Simulations:</span
               >
-              <span class="font-medium">{{ result.simulations | number }}</span>
+              <span class="font-medium">{{
+                result?.additional_stats?.simulations
+              }}</span>
             </div>
           </div>
         </p-tabpanel>
@@ -390,37 +401,37 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
               class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
-              *ngIf="result.additional_stats.expected_return !== undefined"
+              *ngIf="result?.additional_stats?.expected_return !== undefined"
             >
               <span class="text-sm text-surface-600 dark:text-surface-300"
                 >Expected Return:</span
               >
               <span class="font-medium">{{
-                result.additional_stats.expected_return | number : "1.4-4"
+                result?.additional_stats?.expected_return | number : "1.4-4"
               }}</span>
             </div>
             <div
               class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
-              *ngIf="result.additional_stats.volatility !== undefined"
+              *ngIf="result?.additional_stats?.volatility !== undefined"
             >
               <span class="text-sm text-surface-600 dark:text-surface-300"
                 >Portfolio Volatility:</span
               >
               <span class="font-medium">{{
-                result.additional_stats.volatility | number : "1.4-4"
+                result?.additional_stats?.volatility | number : "1.4-4"
               }}</span>
             </div>
             <div
               class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
               *ngIf="
-                result.additional_stats.diversification_ratio !== undefined
+                result?.additional_stats?.diversification_ratio !== undefined
               "
             >
               <span class="text-sm text-surface-600 dark:text-surface-300"
                 >Diversification Ratio:</span
               >
               <span class="font-medium">{{
-                result.additional_stats.diversification_ratio | number : "1.4-4"
+                result?.additional_stats?.diversification_ratio
               }}</span>
             </div>
           </div>
@@ -429,6 +440,7 @@
         <!-- Calculation Details Tab -->
         <p-tabpanel [value]="2">
           <div class="space-y-4">
+            <!-- Portfolio Composition - This is correct -->
             <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
               <h4 class="font-medium mb-3">Portfolio Composition</h4>
               <div class="overflow-x-auto">
@@ -463,8 +475,9 @@
               </div>
             </div>
 
+            <!-- Risk Factor Exposures -->
             <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
-              <h4 class="font-medium mb-3">Risk Factor Sensitivities</h4>
+              <h4 class="font-medium mb-3">Risk Factor Exposures</h4>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
@@ -476,7 +489,7 @@
                         class="text-right py-2"
                         *ngFor="let rf of riskFactors"
                       >
-                        {{ rf.name }}
+                        {{ rf.name }} ($)
                       </th>
                     </tr>
                   </thead>
@@ -490,7 +503,10 @@
                         class="text-right py-2"
                         *ngFor="let rf of riskFactors"
                       >
-                        {{ position.sensitivities[rf.name] | number : "1.0-6" }}
+                        {{
+                          position.sensitivities[rf.name]
+                            | currency : "USD" : "symbol" : "1.0-0"
+                        }}
                       </td>
                     </tr>
                   </tbody>
@@ -498,8 +514,39 @@
               </div>
             </div>
 
+            <!-- Portfolio Risk Factor Summary -->
             <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
-              <h4 class="font-medium mb-3">Risk Factor Data Summary</h4>
+              <h4 class="font-medium mb-3">Total Portfolio Exposures</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                  *ngFor="let rf of riskFactors"
+                  class="bg-surface-0 dark:bg-surface-900 p-3 rounded border"
+                >
+                  <div class="font-medium text-sm mb-2">{{ rf.name }}</div>
+                  <div class="text-xs text-surface-600 dark:text-surface-300">
+                    <div>
+                      Total Exposure:
+                      {{
+                        getTotalExposureForRiskFactor(rf.name)
+                          | currency : "USD" : "symbol" : "1.0-0"
+                      }}
+                    </div>
+                    <div>
+                      % of Portfolio:
+                      {{
+                        (Math.abs(getTotalExposureForRiskFactor(rf.name)) /
+                          getTotalPortfolioValue()) *
+                          100 | number : "1.1-1"
+                      }}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Risk Factor Historical Data - Fixed formatting -->
+            <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+              <h4 class="font-medium mb-3">Risk Factor Historical Data</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
                   *ngFor="let rf of riskFactors"
@@ -509,25 +556,32 @@
                   <div class="text-xs text-surface-600 dark:text-surface-300">
                     <div>Data Points: {{ rf.historical_returns.length }}</div>
                     <div>
-                      Mean:
+                      Mean Return:
                       {{
-                        getRiskFactorMean(rf.historical_returns)
-                          | number : "1.6-6"
-                      }}
+                        getRiskFactorMean(rf.historical_returns) * 100
+                          | number : "1.2-2"
+                      }}%
                     </div>
                     <div>
-                      Min:
+                      Std Deviation:
                       {{
-                        getRiskFactorMin(rf.historical_returns)
-                          | number : "1.6-6"
-                      }}
+                        getRiskFactorStd(rf.historical_returns) * 100
+                          | number : "1.2-2"
+                      }}%
                     </div>
                     <div>
-                      Max:
+                      Min Return:
                       {{
-                        getRiskFactorMax(rf.historical_returns)
-                          | number : "1.6-6"
-                      }}
+                        getRiskFactorMin(rf.historical_returns) * 100
+                          | number : "1.2-2"
+                      }}%
+                    </div>
+                    <div>
+                      Max Return:
+                      {{
+                        getRiskFactorMax(rf.historical_returns) * 100
+                          | number : "1.2-2"
+                      }}%
                     </div>
                   </div>
                 </div>
@@ -557,6 +611,40 @@
     </div>
   </div>
 
+  <!-- Sensitivity Guidelines Section -->
+  <div
+    class="text-xs text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800 p-4 rounded-lg"
+  >
+    <p>
+      <strong>Sensitivity Guidelines:</strong> Enter dollar exposure amounts for
+      each risk factor to ensure accurate portfolio risk calculations.
+    </p>
+    <p class="mt-2"><strong>Risk Factor Exposures:</strong></p>
+    <ul class="list-disc list-inside ml-2 mt-1">
+      <li>
+        <strong>Equity (SP500, NASDAQ):</strong> Market value × beta (e.g., $1M
+        position with 0.9 beta = $900,000 exposure)
+      </li>
+      <li>
+        <strong>Currency (EURUSD, GBPUSD):</strong> Notional amount in base
+        currency (USD)
+      </li>
+      <li>
+        <strong>Interest Rates (US10Y, EU10Y):</strong> Duration × market value
+        for bond portfolios
+      </li>
+      <li>
+        <strong>Commodities (Gold, Oil):</strong> Dollar value of commodity
+        exposure
+      </li>
+    </ul>
+    <p class="mt-2">
+      <strong>Example:</strong> A $1.5M equity portfolio with 0.9 beta should
+      have $1.35M SP500 exposure. A $100K EUR position should have $100,000
+      EURUSD exposure.
+    </p>
+  </div>
+
   <!-- Information Section -->
   <div
     class="text-xs text-surface-500 dark:text-surface-400 bg-surface-50 dark:bg-surface-800 p-4 rounded-lg"
@@ -566,24 +654,63 @@
       correlations between risk factors and position sensitivities to provide a
       comprehensive risk measure.
     </p>
-    <p class="mt-2"><strong>Methods:</strong></p>
+
+    <p class="mt-2"><strong>Key Metrics Explained:</strong></p>
+    <ul class="list-disc list-inside ml-2 mt-1">
+      <li>
+        <strong>Portfolio VaR:</strong> Maximum expected loss at the specified
+        confidence level. For 95% confidence, there's only a 5% chance losses
+        will exceed this amount.
+      </li>
+      <li>
+        <strong>Total Portfolio Value:</strong> Sum of all position market
+        values. Represents the total capital at risk in your portfolio.
+      </li>
+      <li>
+        <strong>VaR as % of Portfolio:</strong> Portfolio VaR divided by total
+        portfolio value. Shows relative risk - typically 1-5% for diversified
+        portfolios.
+      </li>
+    </ul>
+
+    <p class="mt-2"><strong>Risk Interpretation:</strong></p>
+    <ul class="list-disc list-inside ml-2 mt-1">
+      <li><strong>&lt; 1%:</strong> Conservative/Low risk portfolio</li>
+      <li>
+        <strong>1-3%:</strong> Moderate risk, typical for balanced portfolios
+      </li>
+      <li>
+        <strong>3-5%:</strong> Aggressive risk, growth-oriented portfolios
+      </li>
+      <li><strong>&gt; 5%:</strong> High risk, requires careful monitoring</li>
+    </ul>
+
+    <p class="mt-2"><strong>Calculation Methods:</strong></p>
     <ul class="list-disc list-inside ml-2 mt-1">
       <li>
         <strong>Historical:</strong> Uses actual historical correlations and
-        distributions
+        distributions from past market data
       </li>
       <li>
         <strong>Parametric:</strong> Assumes multivariate normal distribution
         with estimated covariance matrix
       </li>
       <li>
-        <strong>Monte Carlo:</strong> Simulates portfolio returns using
-        historical parameters
+        <strong>Monte Carlo:</strong> Simulates thousands of portfolio scenarios
+        using historical parameters and correlations
       </li>
     </ul>
+
     <p class="mt-2">
       <strong>Requirements:</strong> Each risk factor needs at least 10
-      historical data points for reliable calculations.
+      historical data points for reliable calculations. More data points
+      (50-250) provide better statistical accuracy.
+    </p>
+
+    <p class="mt-2">
+      <strong>Example:</strong> A $2M portfolio with $50,000 VaR at 95%
+      confidence means: "We are 95% confident daily losses won't exceed $50,000
+      (2.5% of portfolio value)."
     </p>
   </div>
 </div>

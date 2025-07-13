@@ -243,11 +243,18 @@ def _cov_matrix(returns: np.ndarray) -> np.ndarray:
 def portfolio_var_historical(req: PortfolioVaRRequest):
     mat = _returns_matrix(req.risk_factors)
     delta = _delta_vector(req.positions, [rf.name for rf in req.risk_factors])
+    print(f"Returns matrix shape: {mat.shape}")
+    print(f"Returns matrix:\n{mat}")
+    print(f"Delta vector: {delta}")
+
     pnl = -(mat @ delta)  # loss distribution
+    print(f"P&L distribution: {pnl}")
+    print(f"P&L min: {pnl.min()}, max: {pnl.max()}, mean: {pnl.mean()}")
 
     # use the 95-th percentile on losses, not the 5-th
     pct = req.confidence_level  # 95
     var_value = np.percentile(pnl, pct)  # already positive
+    print(f"VaR at {pct}%: {var_value}")
     stats = dict(
         mean=float(np.mean(pnl)),
         std=float(np.std(pnl)),
@@ -401,12 +408,21 @@ def portfolio_var(req: PortfolioVaRRequest):
             f"CL={req.confidence_level}% sims={req.simulations}"
         )
         var, stats = dispatch_portfolio_var(req)
+        total_portfolio_value = sum(pos.current_value for pos in req.positions)
+        enhanced_stats = {
+            **stats,
+            "total_portfolio_value": total_portfolio_value,
+            "positions_count": len(req.positions),
+            "risk_factors_count": len(req.risk_factors),
+        }
+        if req.method == VaRMethod.MONTE_CARLO:
+            enhanced_stats["simulations"] = req.simulations
         return VaRResponse(
             var=round(float(var), 6),
             confidence_level=f"{req.confidence_level}%",
             method=req.method,
             sample_size=len(req.risk_factors),
-            additional_stats=stats,
+            additional_stats=enhanced_stats,
         )
     except ValueError as e:
         raise HTTPException(

@@ -10,17 +10,6 @@ export interface VaRRequest {
   method: VaRMethod;
 }
 
-export interface AdditionalStats {
-  mean: number;
-  std: number;
-  skewness?: number;
-  kurtosis?: number;
-  min: number;
-  max: number;
-  z_score?: number;
-  distribution?: string;
-}
-
 export interface VaRResponse {
   var: number;
   confidence_level: string;
@@ -73,25 +62,44 @@ export interface RiskFactor {
   historical_returns: number[];
 }
 
+export interface AdditionalStats {
+  mean?: number;
+  std?: number;
+  skewness?: number;
+  kurtosis?: number;
+  min?: number;
+  max?: number;
+  z_score?: number;
+  distribution?: string;
+  simulations?: number;
+  min_simulated?: number;
+  max_simulated?: number;
+  variance?: number;
+  min_sim?: number;
+  total_portfolio_value?: number;
+  positions_count?: number;
+  risk_factors_count?: number;
+  expected_return?: number;
+  volatility?: number;
+  diversification_ratio?: number;
+}
+
 export interface PortfolioVaRRequest {
   positions: Position[];
   risk_factors: RiskFactor[];
   method: "historical" | "parametric" | "monte_carlo";
   confidence_level: number;
-  simulations?: number; // Optional, for Monte Carlo
+  simulations?: number;
 }
 
 export interface PortfolioVaRResponse {
   var: number;
-  confidence_level: number;
+  confidence_level: string;
   method: string;
-  total_portfolio_value: number;
-  positions_count: number;
-  risk_factors_count: number;
+  sample_size: number;
+  total_portfolio_value?: number;
+  positions_count?: number;
+  risk_factors_count?: number;
   simulations?: number;
-  additional_stats?: {
-    expected_return?: number;
-    volatility?: number;
-    diversification_ratio?: number;
-  };
+  additional_stats?: AdditionalStats;
 }

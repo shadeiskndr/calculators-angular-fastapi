@@ -41,6 +41,7 @@ import {
   templateUrl: "./portfolio-var-calculator.component.html",
 })
 export class PortfolioVarCalculatorComponent implements OnDestroy {
+  Math = Math;
   positions: Position[] = [];
   riskFactors: RiskFactor[] = [];
   confidenceLevel: number = 95.0;
@@ -88,12 +89,12 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
     this.addPosition();
     this.positions[0].id = "equity_book";
     this.positions[0].current_value = 1500000;
-    this.positions[0].sensitivities = { SP500: 0.9, EURUSD: -800 };
+    this.positions[0].sensitivities = { SP500: 1350000, EURUSD: -50000 };
 
     this.addPosition();
     this.positions[1].id = "fx_book";
     this.positions[1].current_value = 700000;
-    this.positions[1].sensitivities = { SP500: 0.2, EURUSD: 1500 };
+    this.positions[1].sensitivities = { SP500: 140000, EURUSD: 25000 };
   }
 
   addPosition() {
@@ -163,7 +164,22 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
     );
   }
 
-  // Helper methods for template calculations
+  getTotalExposureForRiskFactor(riskFactorName: string): number {
+    return this.positions.reduce((total, position) => {
+      return total + (position.sensitivities[riskFactorName] || 0);
+    }, 0);
+  }
+
+  getRiskFactorStd(returns: number[]): number {
+    const mean = this.getRiskFactorMean(returns);
+    const squaredDiffs = returns.map((value) => Math.pow(value - mean, 2));
+    const avgSquaredDiff =
+      squaredDiffs.reduce((sum, value) => sum + value, 0) /
+      (returns.length - 1);
+    return Math.sqrt(avgSquaredDiff);
+  }
+
+  // Update existing methods for better accuracy
   getRiskFactorMean(returns: number[]): number {
     return returns.reduce((a, b) => a + b, 0) / returns.length;
   }
@@ -202,7 +218,17 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.result = response;
+          // Enhance the response with computed fields
+          this.result = {
+            ...response,
+            total_portfolio_value: this.getTotalPortfolioValue(),
+            positions_count: this.positions.length,
+            risk_factors_count: this.riskFactors.length,
+            simulations:
+              this.selectedMethod === "monte_carlo"
+                ? this.simulations
+                : undefined,
+          };
           this.loading = false;
         },
         error: (err) => {
