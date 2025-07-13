@@ -243,13 +243,8 @@ def _cov_matrix(returns: np.ndarray) -> np.ndarray:
 def portfolio_var_historical(req: PortfolioVaRRequest):
     mat = _returns_matrix(req.risk_factors)
     delta = _delta_vector(req.positions, [rf.name for rf in req.risk_factors])
-    print(f"Returns matrix shape: {mat.shape}")
-    print(f"Returns matrix:\n{mat}")
-    print(f"Delta vector: {delta}")
 
     pnl = -(mat @ delta)  # loss distribution
-    print(f"P&L distribution: {pnl}")
-    print(f"P&L min: {pnl.min()}, max: {pnl.max()}, mean: {pnl.mean()}")
 
     # use the 95-th percentile on losses, not the 5-th
     pct = req.confidence_level  # 95
@@ -262,6 +257,23 @@ def portfolio_var_historical(req: PortfolioVaRRequest):
         kurtosis=float(calculate_kurtosis(pnl)),
         min=float(np.min(pnl)),
         max=float(np.max(pnl)),
+        # Add percentiles for distribution chart
+        percentiles={
+            "p1": float(np.percentile(pnl, 1)),
+            "p5": float(np.percentile(pnl, 5)),
+            "p25": float(np.percentile(pnl, 25)),
+            "p50": float(np.percentile(pnl, 50)),
+            "p75": float(np.percentile(pnl, 75)),
+            "p95": float(np.percentile(pnl, 95)),
+            "p99": float(np.percentile(pnl, 99))
+        },
+        # Add historical P&L series for time series chart
+        historical_pnl=pnl.tolist(),
+        # Add risk factor contributions
+        risk_factor_contributions={
+            rf.name: float(np.std(mat[:, i] * delta[i])) 
+            for i, rf in enumerate(req.risk_factors)
+        }
     )
     return var_value, stats
 
@@ -275,7 +287,19 @@ def portfolio_var_parametric(req: PortfolioVaRRequest):
     alpha = (100 - req.confidence_level) / 100
     z = norm.ppf(alpha)
     var = -z * np.sqrt(var_variance)
-    stats = dict(z_score=float(z), variance=float(var_variance))
+    stats = dict(
+        z_score=float(z),
+        variance=float(var_variance),
+        volatility=float(np.sqrt(var_variance)),
+        # Add correlation matrix
+        correlation_matrix=np.corrcoef(_returns_matrix(req.risk_factors).T).tolist(),
+        risk_factor_names=[rf.name for rf in req.risk_factors],
+        # Add individual risk factor volatilities
+        individual_volatilities={
+            rf.name: float(np.std(rf.historical_returns))
+            for rf in req.risk_factors
+        }
+    )
     return var, stats
 
 
@@ -292,6 +316,21 @@ def portfolio_var_monte_carlo(req: PortfolioVaRRequest):
         simulations=req.simulations,
         min_sim=float(pnl.min()),
         max_sim=float(pnl.max()),
+        mean=float(np.mean(pnl)),
+        std=float(np.std(pnl)),
+        # Add percentiles for distribution
+        percentiles={
+            "p1": float(np.percentile(pnl, 1)),
+            "p5": float(np.percentile(pnl, 5)),
+            "p25": float(np.percentile(pnl, 25)),
+            "p50": float(np.percentile(pnl, 50)),
+            "p75": float(np.percentile(pnl, 75)),
+            "p95": float(np.percentile(pnl, 95)),
+            "p99": float(np.percentile(pnl, 99))
+        },
+        # Add histogram data for distribution chart
+        histogram_data=np.histogram(pnl, bins=50)[0].tolist(),
+        histogram_bins=np.histogram(pnl, bins=50)[1].tolist()
     )
     return var, stats
 

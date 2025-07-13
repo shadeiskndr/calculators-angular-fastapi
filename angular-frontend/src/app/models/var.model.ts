@@ -75,6 +75,7 @@ export interface AdditionalStats {
   min_simulated?: number;
   max_simulated?: number;
   variance?: number;
+  max_sim?: number;
   min_sim?: number;
   total_portfolio_value?: number;
   positions_count?: number;
@@ -82,6 +83,30 @@ export interface AdditionalStats {
   expected_return?: number;
   volatility?: number;
   diversification_ratio?: number;
+  percentiles?: {
+    p1?: number;
+    p5?: number;
+    p25?: number;
+    p50?: number;
+    p75?: number;
+    p95?: number;
+    p99?: number;
+  };
+  historical_pnl?: number[];
+
+  risk_factor_contributions?: {
+    [riskFactorName: string]: number;
+  };
+
+  correlation_matrix?: number[][];
+  risk_factor_names?: string[];
+
+  individual_volatilities?: {
+    [riskFactorName: string]: number;
+  };
+
+  histogram_data?: number[];
+  histogram_bins?: number[];
 }
 
 export interface PortfolioVaRRequest {
@@ -98,8 +123,8 @@ export interface PortfolioVaRResponse {
   method: string;
   sample_size: number;
   total_portfolio_value?: number;
-  positions_count?: number;
+  positions_count: number;
   risk_factors_count?: number;
   simulations?: number;
-  additional_stats?: AdditionalStats;
+  additional_stats: AdditionalStats;
 }

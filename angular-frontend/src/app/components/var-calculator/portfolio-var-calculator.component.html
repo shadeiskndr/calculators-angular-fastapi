@@ -343,7 +343,7 @@
                 >Total Portfolio Value:</span
               >
               <span class="font-medium">{{
-                result.additional_stats?.total_portfolio_value ||
+                result.additional_stats.total_portfolio_value ||
                   getTotalPortfolioValue() | currency
               }}</span>
             </div>
@@ -356,7 +356,7 @@
               <span class="font-medium"
                 >{{
                   (result.var /
-                    (result.additional_stats?.total_portfolio_value ||
+                    (result.additional_stats.total_portfolio_value ||
                       getTotalPortfolioValue())) *
                     100 | number : "1.2-2"
                 }}%</span
@@ -369,7 +369,7 @@
                 >Number of Positions:</span
               >
               <span class="font-medium">{{
-                result?.additional_stats?.positions_count
+                result.additional_stats.positions_count
               }}</span>
             </div>
             <div
@@ -379,7 +379,7 @@
                 >Risk Factors:</span
               >
               <span class="font-medium">{{
-                result?.additional_stats?.risk_factors_count
+                result.additional_stats.risk_factors_count
               }}</span>
             </div>
             <div
@@ -390,7 +390,7 @@
                 >Simulations:</span
               >
               <span class="font-medium">{{
-                result?.additional_stats?.simulations
+                result.additional_stats.simulations
               }}</span>
             </div>
           </div>
@@ -398,41 +398,493 @@
 
         <!-- Portfolio Statistics Tab -->
         <p-tabpanel [value]="1" *ngIf="result.additional_stats">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
-              *ngIf="result?.additional_stats?.expected_return !== undefined"
-            >
-              <span class="text-sm text-surface-600 dark:text-surface-300"
-                >Expected Return:</span
+          <div class="space-y-6">
+            <!-- Statistical Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg border"
               >
-              <span class="font-medium">{{
-                result?.additional_stats?.expected_return | number : "1.4-4"
-              }}</span>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-primary mb-1">
+                    {{
+                      result.additional_stats.mean
+                        | currency : "USD" : "symbol" : "1.0-0"
+                    }}
+                  </div>
+                  <div class="text-sm text-surface-600 dark:text-surface-300">
+                    Expected P&L
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg border"
+              >
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-orange-600 mb-1">
+                    {{
+                      result.additional_stats.std
+                        | currency : "USD" : "symbol" : "1.0-0"
+                    }}
+                  </div>
+                  <div class="text-sm text-surface-600 dark:text-surface-300">
+                    Portfolio Volatility
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg border"
+                *ngIf="result.additional_stats.skewness !== undefined"
+              >
+                <div class="text-center">
+                  <div
+                    class="text-2xl font-bold mb-1"
+                    [ngClass]="{
+                      'text-red-600': result.additional_stats.skewness < -0.5,
+                      'text-yellow-600':
+                        result.additional_stats.skewness >= -0.5 &&
+                        result.additional_stats.skewness <= 0.5,
+                      'text-green-600': result.additional_stats.skewness > 0.5
+                    }"
+                  >
+                    {{ result.additional_stats.skewness | number : "1.2-2" }}
+                  </div>
+                  <div class="text-sm text-surface-600 dark:text-surface-300">
+                    Skewness
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg border"
+                *ngIf="result.additional_stats.kurtosis !== undefined"
+              >
+                <div class="text-center">
+                  <div
+                    class="text-2xl font-bold mb-1"
+                    [ngClass]="{
+                      'text-red-600': result.additional_stats.kurtosis > 3,
+                      'text-yellow-600':
+                        result.additional_stats.kurtosis >= 0 &&
+                        result.additional_stats.kurtosis <= 3,
+                      'text-green-600': result.additional_stats.kurtosis < 0
+                    }"
+                  >
+                    {{ result.additional_stats.kurtosis | number : "1.2-2" }}
+                  </div>
+                  <div class="text-sm text-surface-600 dark:text-surface-300">
+                    Excess Kurtosis
+                  </div>
+                </div>
+              </div>
             </div>
-            <div
-              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
-              *ngIf="result?.additional_stats?.volatility !== undefined"
-            >
-              <span class="text-sm text-surface-600 dark:text-surface-300"
-                >Portfolio Volatility:</span
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- P&L Distribution Chart -->
+              <div
+                class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+                *ngIf="distributionChartData"
               >
-              <span class="font-medium">{{
-                result?.additional_stats?.volatility | number : "1.4-4"
-              }}</span>
+                <div class="flex items-center justify-between mb-4">
+                  <span class="font-medium text-base">P&L Distribution</span>
+                  <i class="pi pi-chart-bar text-primary"></i>
+                </div>
+                <p-chart
+                  type="bar"
+                  height="300px"
+                  [data]="distributionChartData"
+                  [options]="distributionChartOptions"
+                />
+                <div
+                  class="text-xs text-surface-500 dark:text-surface-400 mt-2"
+                >
+                  Shows portfolio profit/loss at different confidence levels
+                </div>
+              </div>
+
+              <!-- Risk Factor Contributions Chart -->
+              <div
+                class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+                *ngIf="riskContributionChartData"
+              >
+                <div class="flex items-center justify-between mb-4">
+                  <span class="font-medium text-base">Risk Contributions</span>
+                  <i class="pi pi-chart-pie text-primary"></i>
+                </div>
+                <p-chart
+                  type="doughnut"
+                  height="300px"
+                  [data]="riskContributionChartData"
+                  [options]="riskContributionChartOptions"
+                />
+                <div
+                  class="text-xs text-surface-500 dark:text-surface-400 mt-2"
+                >
+                  Relative contribution of each risk factor to portfolio
+                  volatility
+                </div>
+              </div>
+
+              <!-- Risk Factor Volatilities Chart (for parametric method) -->
+              <div
+                class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+                *ngIf="correlationChartData && selectedMethod === 'parametric'"
+              >
+                <div class="flex items-center justify-between mb-4">
+                  <span class="font-medium text-base"
+                    >Risk Factor Volatilities</span
+                  >
+                  <i class="pi pi-chart-line text-primary"></i>
+                </div>
+                <p-chart
+                  type="bar"
+                  height="300px"
+                  [data]="correlationChartData"
+                  [options]="correlationChartOptions"
+                />
+                <div
+                  class="text-xs text-surface-500 dark:text-surface-400 mt-2"
+                >
+                  Individual volatility of each risk factor (annualized %)
+                </div>
+              </div>
+
+              <!-- Monte Carlo Simulation Info -->
+              <div
+                class="bg-surface-0 dark:bg-surface-900 p-6 rounded-xl border border-surface-200 dark:border-surface-700"
+                *ngIf="
+                  selectedMethod === 'monte_carlo' &&
+                  result.additional_stats.simulations
+                "
+              >
+                <div class="flex items-center justify-between mb-4">
+                  <span class="font-medium text-base"
+                    >Simulation Statistics</span
+                  >
+                  <i class="pi pi-cog text-primary"></i>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Simulations Run:</span
+                    >
+                    <span class="font-medium">{{
+                      result.additional_stats.simulations | number
+                    }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Worst Case:</span
+                    >
+                    <span class="font-medium text-red-600">{{
+                      result.additional_stats.min_sim | currency
+                    }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Best Case:</span
+                    >
+                    <span class="font-medium text-green-600">{{
+                      result.additional_stats.max_sim | currency
+                    }}</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center"
+                    *ngIf="result.additional_stats.percentiles"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >99% VaR:</span
+                    >
+                    <span class="font-medium text-orange-600">{{
+                      result.additional_stats.percentiles.p99 | currency
+                    }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div
-              class="flex justify-between items-center p-3 bg-surface-50 dark:bg-surface-800 rounded"
-              *ngIf="
-                result?.additional_stats?.diversification_ratio !== undefined
-              "
-            >
-              <span class="text-sm text-surface-600 dark:text-surface-300"
-                >Diversification Ratio:</span
+
+            <!-- Detailed Statistics Tables -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Risk Metrics Table -->
+              <div class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg">
+                <h4 class="font-medium mb-3">Risk Metrics</h4>
+                <div class="space-y-2">
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Portfolio VaR:</span
+                    >
+                    <span class="font-medium">{{ result.var | currency }}</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Expected Return:</span
+                    >
+                    <span
+                      class="font-medium"
+                      [ngClass]="{
+                        'text-green-600':
+                          (result.additional_stats.mean || 0) > 0,
+                        'text-red-600': (result.additional_stats.mean || 0) < 0
+                      }"
+                    >
+                      {{ result.additional_stats.mean | currency }}
+                    </span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Volatility:</span
+                    >
+                    <span class="font-medium">{{
+                      result.additional_stats.std | currency
+                    }}</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                    *ngIf="result.additional_stats.volatility !== undefined"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Annualized Vol:</span
+                    >
+                    <span class="font-medium"
+                      >{{
+                        result.additional_stats.volatility * 100
+                          | number : "1.2-2"
+                      }}%</span
+                    >
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2"
+                    *ngIf="result.additional_stats.z_score !== undefined"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Z-Score:</span
+                    >
+                    <span class="font-medium">{{
+                      result.additional_stats.z_score | number : "1.3-3"
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Percentile Analysis -->
+              <div
+                class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg"
+                *ngIf="result.additional_stats.percentiles"
               >
-              <span class="font-medium">{{
-                result?.additional_stats?.diversification_ratio
-              }}</span>
+                <h4 class="font-medium mb-3">Percentile Analysis</h4>
+                <div class="space-y-2">
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >1% Worst Case:</span
+                    >
+                    <span class="font-medium text-red-700">{{
+                      result.additional_stats.percentiles.p1 | currency
+                    }}</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >5% VaR:</span
+                    >
+                    <span class="font-medium text-red-600">{{
+                      result.additional_stats.percentiles.p5 | currency
+                    }}</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >25th Percentile:</span
+                    >
+                    <span
+                      class="font-medium"
+                      [ngClass]="{
+                        'text-red-400':
+                          (result.additional_stats.percentiles.p25 || 0) < 0,
+                        'text-green-400':
+                          (result.additional_stats.percentiles.p25 || 0) >= 0
+                      }"
+                      >{{
+                        result.additional_stats.percentiles.p25 | currency
+                      }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >Median (50%):</span
+                    >
+                    <span
+                      class="font-medium"
+                      [ngClass]="{
+                        'text-red-400':
+                          (result.additional_stats.percentiles.p50 || 0) < 0,
+                        'text-green-400':
+                          (result.additional_stats.percentiles.p50 || 0) >= 0
+                      }"
+                      >{{
+                        result.additional_stats.percentiles.p50 | currency
+                      }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex justify-between items-center py-2 border-b border-surface-200 dark:border-surface-600"
+                  >
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >75th Percentile:</span
+                    >
+                    <span
+                      class="font-medium"
+                      [ngClass]="{
+                        'text-red-500':
+                          (result.additional_stats.percentiles.p75 || 0) < 0,
+                        'text-green-500':
+                          (result.additional_stats.percentiles.p75 || 0) >= 0
+                      }"
+                      >{{
+                        result.additional_stats.percentiles.p75 | currency
+                      }}</span
+                    >
+                  </div>
+                  <div class="flex justify-between items-center py-2">
+                    <span class="text-sm text-surface-600 dark:text-surface-300"
+                      >99th Percentile:</span
+                    >
+                    <span
+                      class="font-medium"
+                      [ngClass]="{
+                        'text-red-600':
+                          (result.additional_stats.percentiles.p99 || 0) < 0,
+                        'text-green-600':
+                          (result.additional_stats.percentiles.p99 || 0) >= 0
+                      }"
+                      >{{
+                        result.additional_stats.percentiles.p99 | currency
+                      }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Risk Factor Individual Statistics -->
+            <div
+              class="bg-surface-50 dark:bg-surface-800 p-4 rounded-lg"
+              *ngIf="result.additional_stats.individual_volatilities"
+            >
+              <h4 class="font-medium mb-3">Risk Factor Analysis</h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="border-b border-surface-200 dark:border-surface-600"
+                    >
+                      <th class="text-left py-2">Risk Factor</th>
+                      <th class="text-right py-2">Volatility</th>
+                      <th class="text-right py-2">Portfolio Exposure</th>
+                      <th class="text-right py-2">Risk Contribution</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let rf of riskFactors"
+                      class="border-b border-surface-100 dark:border-surface-700"
+                    >
+                      <td class="py-2 font-medium">{{ rf.name }}</td>
+                      <td class="text-right py-2">
+                        {{
+                          result.additional_stats.individual_volatilities[
+                            rf.name
+                          ] * 100 | number : "1.2-2"
+                        }}%
+                      </td>
+                      <td class="text-right py-2">
+                        {{
+                          getTotalExposureForRiskFactor(rf.name)
+                            | currency : "USD" : "symbol" : "1.0-0"
+                        }}
+                      </td>
+                      <td
+                        class="text-right py-2"
+                        *ngIf="
+                          result.additional_stats.risk_factor_contributions
+                        "
+                      >
+                        {{
+                          result.additional_stats.risk_factor_contributions[
+                            rf.name
+                          ] | currency : "USD" : "symbol" : "1.0-0"
+                        }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Interpretation Guide -->
+            <div
+              class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800"
+            >
+              <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                Statistical Interpretation Guide
+              </h4>
+              <div class="text-xs text-blue-700 dark:text-blue-300 space-y-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>Skewness:</strong></p>
+                    <ul class="list-disc list-inside ml-2 mt-1">
+                      <li>
+                        <strong>Negative (&lt; -0.5):</strong> Higher
+                        probability of large losses
+                      </li>
+                      <li>
+                        <strong>Near Zero (-0.5 to 0.5):</strong> Symmetric
+                        distribution
+                      </li>
+                      <li>
+                        <strong>Positive (&gt; 0.5):</strong> Higher probability
+                        of large gains
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p><strong>Excess Kurtosis:</strong></p>
+                    <ul class="list-disc list-inside ml-2 mt-1">
+                      <li>
+                        <strong>High (&gt; 3):</strong> Fat tails, extreme
+                        events more likely
+                      </li>
+                      <li>
+                        <strong>Normal (0-3):</strong> Similar to normal
+                        distribution
+                      </li>
+                      <li>
+                        <strong>Low (&lt; 0):</strong> Thin tails, fewer extreme
+                        events
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <p class="mt-3">
+                  <strong>Risk Contribution:</strong> Shows how much each risk
+                  factor contributes to overall portfolio volatility. Higher
+                  contributions indicate greater sensitivity to that risk
+                  factor.
+                </p>
+              </div>
             </div>
           </div>
         </p-tabpanel>

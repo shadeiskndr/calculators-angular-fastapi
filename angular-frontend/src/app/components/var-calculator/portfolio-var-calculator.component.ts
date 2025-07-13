@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from "@angular/core";
+import { Component, OnDestroy, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ButtonModule } from "primeng/button";
@@ -11,9 +11,11 @@ import { MessageModule } from "primeng/message";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { TabsModule } from "primeng/tabs";
 import { IftaLabelModule } from "primeng/iftalabel";
-import { Subject, takeUntil } from "rxjs";
+import { ChartModule } from "primeng/chart";
+import { Subject, takeUntil, debounceTime, Subscription } from "rxjs";
 
 import { VarApiService } from "../../services/var-api.service";
+import { LayoutService } from "../../services/layout.service";
 import {
   PortfolioVaRRequest,
   PortfolioVaRResponse,
@@ -37,10 +39,12 @@ import {
     ProgressSpinnerModule,
     TabsModule,
     IftaLabelModule,
+    ChartModule,
   ],
   templateUrl: "./portfolio-var-calculator.component.html",
 })
 export class PortfolioVarCalculatorComponent implements OnDestroy {
+  layoutService = inject(LayoutService);
   Math = Math;
   positions: Position[] = [];
   riskFactors: RiskFactor[] = [];
@@ -53,7 +57,15 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
   loading: boolean = false;
   activeResultTab: number = 0;
 
+  distributionChartData: any;
+  distributionChartOptions: any;
+  riskContributionChartData: any;
+  riskContributionChartOptions: any;
+  correlationChartData: any;
+  correlationChartOptions: any;
+
   private destroy$ = new Subject<void>();
+  private chartSubscription!: Subscription;
 
   methodOptions = [
     { label: "Historical Simulation", value: "historical" },
@@ -63,11 +75,21 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
 
   constructor(private varApiService: VarApiService) {
     this.initializeDefaultData();
+    this.chartSubscription = this.layoutService.appStateUpdate$
+      .pipe(debounceTime(25))
+      .subscribe(() => {
+        if (this.result) {
+          this.initializeCharts();
+        }
+      });
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.chartSubscription) {
+      this.chartSubscription.unsubscribe();
+    }
   }
 
   initializeDefaultData() {
@@ -89,12 +111,12 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
     this.addPosition();
     this.positions[0].id = "equity_book";
     this.positions[0].current_value = 1500000;
-    this.positions[0].sensitivities = { SP500: 1350000, EURUSD: -50000 };
+    this.positions[0].sensitivities = { SP500: 135000, EURUSD: 100000 };
 
     this.addPosition();
     this.positions[1].id = "fx_book";
     this.positions[1].current_value = 700000;
-    this.positions[1].sensitivities = { SP500: 140000, EURUSD: 25000 };
+    this.positions[1].sensitivities = { SP500: 140000, EURUSD: 85000 };
   }
 
   addPosition() {
@@ -218,17 +240,8 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          // Enhance the response with computed fields
-          this.result = {
-            ...response,
-            total_portfolio_value: this.getTotalPortfolioValue(),
-            positions_count: this.positions.length,
-            risk_factors_count: this.riskFactors.length,
-            simulations:
-              this.selectedMethod === "monte_carlo"
-                ? this.simulations
-                : undefined,
-          };
+          this.result = response;
+          this.initializeCharts();
           this.loading = false;
         },
         error: (err) => {
@@ -236,5 +249,185 @@ export class PortfolioVarCalculatorComponent implements OnDestroy {
           this.loading = false;
         },
       });
+  }
+
+  // ✅ Add chart initialization method
+  initializeCharts() {
+    if (!this.result?.additional_stats) return;
+
+    const documentStyle = getComputedStyle(document.documentElement);
+    const textColor = documentStyle.getPropertyValue("--p-text-muted-color");
+    const textColorSecondary = documentStyle.getPropertyValue("--p-text-color");
+    const surfaceBorder = documentStyle.getPropertyValue(
+      "--p-content-border-color"
+    );
+
+    this.initializeDistributionChart(documentStyle, textColor, surfaceBorder);
+    this.initializeRiskContributionChart(
+      documentStyle,
+      textColor,
+      surfaceBorder
+    );
+
+    if (this.selectedMethod === "parametric") {
+      this.initializeCorrelationChart(documentStyle, textColor, surfaceBorder);
+    }
+  }
+
+  // ✅ Distribution/Percentile Chart
+  initializeDistributionChart(
+    documentStyle: CSSStyleDeclaration,
+    textColor: string,
+    surfaceBorder: string
+  ) {
+    const stats = this.result?.additional_stats;
+    if (!stats?.percentiles) return;
+
+    this.distributionChartData = {
+      labels: ["1%", "5%", "25%", "50%", "75%", "95%", "99%"],
+      datasets: [
+        {
+          type: "bar",
+          label: "Portfolio P&L Distribution",
+          backgroundColor: documentStyle.getPropertyValue("--p-primary-400"),
+          borderColor: documentStyle.getPropertyValue("--p-primary-500"),
+          data: [
+            stats.percentiles.p1 || 0,
+            stats.percentiles.p5 || 0,
+            stats.percentiles.p25 || 0,
+            stats.percentiles.p50 || 0,
+            stats.percentiles.p75 || 0,
+            stats.percentiles.p95 || 0,
+            stats.percentiles.p99 || 0,
+          ],
+          barThickness: 32,
+        },
+      ],
+    };
+
+    this.distributionChartOptions = {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: textColor },
+        },
+        title: {
+          display: true,
+          text: "P&L Distribution (Percentiles)",
+          color: textColor,
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: textColor },
+          grid: { color: surfaceBorder },
+        },
+        y: {
+          ticks: { color: textColor },
+          grid: { color: surfaceBorder },
+        },
+      },
+    };
+  }
+
+  // ✅ Risk Factor Contribution Chart
+  initializeRiskContributionChart(
+    documentStyle: CSSStyleDeclaration,
+    textColor: string,
+    surfaceBorder: string
+  ) {
+    const stats = this.result?.additional_stats;
+    if (!stats?.risk_factor_contributions) return;
+
+    const contributions = stats.risk_factor_contributions;
+    const labels = Object.keys(contributions);
+    const data = Object.values(contributions);
+
+    this.riskContributionChartData = {
+      labels: labels,
+      datasets: [
+        {
+          type: "doughnut",
+          label: "Risk Contribution",
+          backgroundColor: [
+            documentStyle.getPropertyValue("--p-primary-400"),
+            documentStyle.getPropertyValue("--p-primary-300"),
+            documentStyle.getPropertyValue("--p-primary-200"),
+            documentStyle.getPropertyValue("--p-primary-100"),
+          ],
+          data: data,
+        },
+      ],
+    };
+
+    this.riskContributionChartOptions = {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: textColor },
+          position: "bottom",
+        },
+        title: {
+          display: true,
+          text: "Risk Factor Contributions",
+          color: textColor,
+        },
+      },
+    };
+  }
+
+  // ✅ Correlation Matrix Chart (for parametric method)
+  initializeCorrelationChart(
+    documentStyle: CSSStyleDeclaration,
+    textColor: string,
+    surfaceBorder: string
+  ) {
+    const stats = this.result?.additional_stats;
+    if (!stats?.correlation_matrix || !stats?.risk_factor_names) return;
+
+    // For simplicity, show individual volatilities as a bar chart
+    const volatilities = stats.individual_volatilities;
+    if (!volatilities) return;
+
+    this.correlationChartData = {
+      labels: Object.keys(volatilities),
+      datasets: [
+        {
+          type: "bar",
+          label: "Individual Volatilities",
+          backgroundColor: documentStyle.getPropertyValue("--p-secondary-400"),
+          borderColor: documentStyle.getPropertyValue("--p-secondary-500"),
+          data: Object.values(volatilities).map((vol: any) => vol * 100), // Convert to percentage
+          barThickness: 32,
+        },
+      ],
+    };
+
+    this.correlationChartOptions = {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: textColor },
+        },
+        title: {
+          display: true,
+          text: "Risk Factor Volatilities (%)",
+          color: textColor,
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: textColor },
+          grid: { color: surfaceBorder },
+        },
+        y: {
+          ticks: { color: textColor },
+          grid: { color: surfaceBorder },
+        },
+      },
+    };
   }
 }
