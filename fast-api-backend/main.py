@@ -265,15 +265,15 @@ def portfolio_var_historical(req: PortfolioVaRRequest):
             "p50": float(np.percentile(pnl, 50)),
             "p75": float(np.percentile(pnl, 75)),
             "p95": float(np.percentile(pnl, 95)),
-            "p99": float(np.percentile(pnl, 99))
+            "p99": float(np.percentile(pnl, 99)),
         },
         # Add historical P&L series for time series chart
         historical_pnl=pnl.tolist(),
         # Add risk factor contributions
         risk_factor_contributions={
-            rf.name: float(np.std(mat[:, i] * delta[i])) 
+            rf.name: float(np.std(mat[:, i] * delta[i]))
             for i, rf in enumerate(req.risk_factors)
-        }
+        },
     )
     return var_value, stats
 
@@ -296,9 +296,8 @@ def portfolio_var_parametric(req: PortfolioVaRRequest):
         risk_factor_names=[rf.name for rf in req.risk_factors],
         # Add individual risk factor volatilities
         individual_volatilities={
-            rf.name: float(np.std(rf.historical_returns))
-            for rf in req.risk_factors
-        }
+            rf.name: float(np.std(rf.historical_returns)) for rf in req.risk_factors
+        },
     )
     return var, stats
 
@@ -326,11 +325,11 @@ def portfolio_var_monte_carlo(req: PortfolioVaRRequest):
             "p50": float(np.percentile(pnl, 50)),
             "p75": float(np.percentile(pnl, 75)),
             "p95": float(np.percentile(pnl, 95)),
-            "p99": float(np.percentile(pnl, 99))
+            "p99": float(np.percentile(pnl, 99)),
         },
         # Add histogram data for distribution chart
         histogram_data=np.histogram(pnl, bins=50)[0].tolist(),
-        histogram_bins=np.histogram(pnl, bins=50)[1].tolist()
+        histogram_bins=np.histogram(pnl, bins=50)[1].tolist(),
     )
     return var, stats
 

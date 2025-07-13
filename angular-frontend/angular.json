@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "primeng-quickstart": {
+    "calculators-frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -39,7 +39,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kB",
-                  "maximumError": "1.5MB"
+                  "maximumError": "2.0MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -61,10 +61,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "primeng-quickstart:build:production"
+              "buildTarget": "calculators-frontend:build:production"
             },
             "development": {
-              "buildTarget": "primeng-quickstart:build:development"
+              "buildTarget": "calculators-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
